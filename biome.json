@@ -1,0 +1,79 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "organizeImports": { "enabled": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignore": ["dist", "node_modules", ".turbo", "coverage", "research", ".scratch"]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "useImportType": "error",
+        "useNodejsImportProtocol": "error",
+        "useConst": "error",
+        "noNonNullAssertion": "error"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "suspicious": {
+        "noConsoleLog": "error",
+        "noExplicitAny": "error"
+      },
+      "nursery": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "node:crypto": "passmint core must not import from node:*. Use globalThis.crypto (Web Crypto).",
+              "node:buffer": "passmint core must not import from node:*. Use Uint8Array.",
+              "node:stream": "passmint core must not import from node:*. Use Web Streams.",
+              "node:fs": "passmint core must not import from node:*. Consumers pass bytes directly.",
+              "node:path": "passmint core must not import from node:*.",
+              "node:util": "passmint core must not import from node:*."
+            }
+          }
+        }
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "always"
+    }
+  },
+  "overrides": [
+    {
+      "include": ["**/test/**", "**/*.test.ts", "**/scripts/**", "examples/**"],
+      "linter": {
+        "rules": {
+          "nursery": {
+            "noRestrictedImports": "off"
+          },
+          "suspicious": {
+            "noConsoleLog": "off"
+          },
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
+}

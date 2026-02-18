@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.turbo/
+.DS_Store
+*.log
+.scratch/
+.claude/
+research/
+architecture/
+DECISIONS.md
+coverage/
+.vitest-cache/
+.wrangler/
+.mf/
+
+# examples/node: user-supplied cert material and generated output.
+# NEVER commit private keys or generated .pkpass files.
+examples/node/*.pem
+examples/node/*.key
+examples/node/*.p12
+examples/node/*.cer
+examples/node/*.pkpass
+!examples/node/README.md

@@ -1,0 +1,96 @@
+{
+  "name": "passmint",
+  "version": "0.0.0",
+  "description": "Edge-native Apple Wallet + Google Wallet pass generation. Web Crypto only.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "LICENSE", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:workers": "vitest run --config vitest.workers.config.ts",
+    "type-check": "tsc --noEmit",
+    "bundle-guard": "node scripts/bundle-guard.mjs",
+    "size": "size-limit",
+    "attw": "attw --pack . --profile esm-only",
+    "publint": "publint",
+    "clean": "rm -rf dist .turbo"
+  },
+  "size-limit": [
+    {
+      "name": "passmint source (gzipped, deps external)",
+      "path": "dist/index.js",
+      "limit": "15 KB",
+      "gzip": true,
+      "ignore": [
+        "@peculiar/asn1-cms",
+        "@peculiar/asn1-rsa",
+        "@peculiar/asn1-schema",
+        "@peculiar/asn1-x509",
+        "fflate",
+        "valibot",
+        "pvtsutils",
+        "pvutils",
+        "tslib"
+      ]
+    },
+    {
+      "name": "passmint + deps (gzipped, worst-case consumer bundle)",
+      "path": "dist/index.js",
+      "limit": "50 KB",
+      "gzip": true
+    }
+  ],
+  "dependencies": {
+    "@peculiar/asn1-cms": "catalog:",
+    "@peculiar/asn1-rsa": "catalog:",
+    "@peculiar/asn1-schema": "catalog:",
+    "@peculiar/asn1-x509": "catalog:",
+    "fflate": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "catalog:",
+    "@cloudflare/vitest-pool-workers": "^0.5",
+    "@size-limit/preset-small-lib": "^12.1.0",
+    "@types/node": "catalog:",
+    "publint": "catalog:",
+    "size-limit": "^12.1.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "apple-wallet",
+    "google-wallet",
+    "pkpass",
+    "wallet",
+    "pass",
+    "edge",
+    "cloudflare-workers",
+    "vercel-edge",
+    "deno",
+    "bun",
+    "web-crypto"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/passmint/passmint-pkg.git",
+    "directory": "packages/passmint"
+  }
+}
