@@ -1,0 +1,12 @@
+# Minimal Workers config for the vitest-pool-workers runtime matrix
+# test. `nodejs_compat` is required by vitest-pool-workers itself (not
+# by the library) — it's used by the pool's test runner infrastructure
+# to load test modules. The library under test never imports from
+# `node:*`; that's enforced separately by Biome's noRestrictedImports
+# rule and by the post-build bundle-guard script. Running the library
+# inside actual workerd is still a valuable runtime verification layer
+# on top of those static checks.
+name = "passmint-workers-tests"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+main = "test/workers/worker-entry.ts"
