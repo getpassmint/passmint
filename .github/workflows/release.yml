@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Don't run on forks.
+    if: github.repository == 'passmint/passmint-pkg'
+    permissions:
+      # Push the "Version Packages" PR and tags.
+      contents: write
+      pull-requests: write
+      # Required for npm provenance via OIDC.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Changesets needs full history to detect version bumps.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # Gate the release on the same checks the CI workflow runs.
+      # A bad build should never reach npm.
+      - run: pnpm lint
+      - run: pnpm type-check
+      - run: pnpm test
+      - run: pnpm --filter passmint bundle-guard
+      - run: pnpm --filter passmint size
+      - run: pnpm --filter passmint publint
+      - run: pnpm --filter passmint attw
+      - uses: changesets/action@v1
+        with:
+          # When there are pending changesets, opens/updates the
+          # "Version Packages" PR. When that PR is merged and the
+          # changesets are gone, `publish` runs and ships to npm.
+          version: pnpm changeset version
+          publish: pnpm changeset publish
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
