@@ -1,0 +1,13 @@
+{
+  "name": "passmint-example-node",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate.mjs",
+    "google": "node google.mjs"
+  },
+  "dependencies": {
+    "passmint": "workspace:*"
+  }
+}
