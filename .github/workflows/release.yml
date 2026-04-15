@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     # Don't run on forks.
     if: github.repository == 'getpassmint/passmint'
+    # Gate publishes through the `production` GitHub environment. This
+    # matches the `environment` claim in the trusted publisher config
+    # on npmjs.com and gives us a place to hang required reviewers or
+    # environment-scoped secrets later without touching this file.
+    environment: production
     permissions:
       # Push the "Version Packages" PR and tags.
       contents: write
