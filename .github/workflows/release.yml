@@ -27,14 +27,14 @@ jobs:
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '22'
+          # Node 24 ships with npm 11.x, which is required for trusted
+          # publishing via OIDC. Node 22 is on npm 10.x and can't
+          # self-upgrade cleanly (the upgrade trips on its own module
+          # tree), so we use 24 directly here. CI still runs on the
+          # 20/22/24 matrix.
+          node-version: '24'
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
-      # Trusted publishing requires npm >= 11.5.1. Node 22 still ships with
-      # npm 10.x, so upgrade the globally-installed npm before any publish
-      # step runs. Remove once actions/setup-node ships Node with npm 11+
-      # by default.
-      - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       # Gate the release on the same checks the CI workflow runs.
