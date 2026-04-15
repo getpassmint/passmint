@@ -93,6 +93,71 @@ describe('renderGooglePayload — boarding pass routing', () => {
     const cls = (payload.transitClasses as Record<string, unknown>[])[0] as Record<string, unknown>
     expect(cls.transitType).toBe('TRAIN')
   })
+
+  it('throws E_GOOGLE_MISSING_FLIGHT_SEMANTICS when an air boarding pass lacks required semantics', () => {
+    // Google's FlightClass requires airlineCode, flightNumber, and both
+    // airport codes. Previously we emitted placeholder empty objects
+    // (`{ carrier: {}, origin: {}, destination: {} }`) which the Wallet
+    // API rejects at save-link time with an opaque error.
+    const cases: Array<{
+      semantics: Record<string, unknown> | undefined
+      missing: string[]
+    }> = [
+      { semantics: undefined, missing: ['airlineCode', 'flightNumber', 'departureAirportCode', 'arrivalAirportCode'] },
+      {
+        semantics: { airlineCode: 'AA', flightNumber: 100 },
+        missing: ['departureAirportCode', 'arrivalAirportCode'],
+      },
+      {
+        semantics: { airlineCode: 'AA', flightNumber: 100, departureAirportCode: 'SFO' },
+        missing: ['arrivalAirportCode'],
+      },
+    ]
+    for (const c of cases) {
+      const input: PassInput = {
+        ...base,
+        style: 'boardingPass',
+        transitType: 'air',
+        ...(c.semantics ? { semantics: c.semantics } : {}),
+      } as PassInput
+      let err: unknown
+      try {
+        renderGooglePayload(input, { issuerId })
+      } catch (e) {
+        err = e
+      }
+      expect(err, `missing=${c.missing.join(',')}`).toBeInstanceOf(PassmintRenderError)
+      expect((err as PassmintRenderError).code).toBe('E_GOOGLE_MISSING_FLIGHT_SEMANTICS')
+      for (const field of c.missing) {
+        expect((err as Error).message).toContain(`semantics.${field}`)
+      }
+    }
+  })
+
+  it('emits a fully-populated flightClass when required semantics are present', () => {
+    // Sanity check that the happy path still produces no empty placeholder
+    // objects — carrier/flightNumber/origin/destination are all real values.
+    const payload = renderGooglePayload(
+      {
+        ...base,
+        style: 'boardingPass',
+        transitType: 'air',
+        semantics: {
+          airlineCode: 'BA',
+          flightNumber: 286,
+          departureAirportCode: 'SFO',
+          arrivalAirportCode: 'LHR',
+        },
+      },
+      { issuerId },
+    )
+    const cls = (payload.flightClasses as Record<string, unknown>[])[0] as Record<string, unknown>
+    const header = cls.flightHeader as Record<string, unknown>
+    expect(header.carrier).toEqual({ carrierIataCode: 'BA' })
+    expect(header.flightNumber).toBe('286')
+    expect(cls.origin).toEqual({ airportIataCode: 'SFO' })
+    expect(cls.destination).toEqual({ airportIataCode: 'LHR' })
+  })
 })
 
 describe('renderGooglePayload — other styles', () => {
@@ -135,7 +200,7 @@ describe('renderGooglePayload — shared mapping', () => {
       {
         ...base,
         style: 'generic',
-        barcodes: [{ format: 'pdf417', message: 'ABC', messageEncoding: 'utf-8' }],
+        barcodes: [{ format: 'pdf417', message: 'ABC' }],
       },
       { issuerId },
     )
@@ -144,7 +209,50 @@ describe('renderGooglePayload — shared mapping', () => {
     expect(barcode.type).toBe('PDF_417')
     expect(barcode.value).toBe('ABC')
     expect(barcode.alternateText).toBe('ABC')
-    expect(barcode.renderEncoding).toBe('UTF_8')
+    // Non-QR barcodes can never carry UTF_8 per Google's BarcodeRenderEncoding enum.
+    expect(barcode.renderEncoding).toBe('RENDER_ENCODING_UNSPECIFIED')
+  })
+
+  it('emits UTF_8 renderEncoding only for QR + utf-8, UNSPECIFIED otherwise', () => {
+    // Google's BarcodeRenderEncoding has only two values: UTF_8 (QR-only) and
+    // RENDER_ENCODING_UNSPECIFIED. The previous implementation normalized our
+    // own encoding names (ISO_8859_1 / UTF_16) which Google rejects at
+    // save-link time.
+    // https://developers.google.com/wallet/reference/rest/v1/BarcodeRenderEncoding
+    const cases: Array<{
+      format: 'qr' | 'pdf417' | 'aztec' | 'code128'
+      messageEncoding?: 'iso-8859-1' | 'utf-8' | 'utf-16'
+      expected: string
+    }> = [
+      { format: 'qr', messageEncoding: 'utf-8', expected: 'UTF_8' },
+      { format: 'qr', messageEncoding: 'iso-8859-1', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+      { format: 'qr', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+      // UTF_8 is QR-only per Google — PDF417/Aztec/Code128 with utf-8 must still fall back.
+      { format: 'pdf417', messageEncoding: 'utf-8', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+      { format: 'aztec', messageEncoding: 'utf-8', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+      { format: 'code128', messageEncoding: 'utf-8', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+      { format: 'code128', expected: 'RENDER_ENCODING_UNSPECIFIED' },
+    ]
+    for (const c of cases) {
+      const barcode: {
+        format: 'qr' | 'pdf417' | 'aztec' | 'code128'
+        message: string
+        messageEncoding?: 'iso-8859-1' | 'utf-8' | 'utf-16'
+      } = { format: c.format, message: 'ABC' }
+      if (c.messageEncoding !== undefined) barcode.messageEncoding = c.messageEncoding
+      const payload = renderGooglePayload(
+        { ...base, style: 'generic', barcodes: [barcode] },
+        { issuerId },
+      )
+      const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<
+        string,
+        unknown
+      >
+      const rendered = obj.barcode as Record<string, unknown>
+      expect(rendered.renderEncoding, `${c.format} / ${c.messageEncoding ?? 'no-encoding'}`).toBe(
+        c.expected,
+      )
+    }
   })
 
   it('converts rgb() and short hex to #rrggbb', () => {

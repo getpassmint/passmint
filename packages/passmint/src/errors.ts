@@ -39,6 +39,7 @@ export class PassmintSchemaError extends PassmintError {
 export type RenderErrorCode =
   | 'E_APPLE_MISSING_IMAGE_BYTES'
   | 'E_GOOGLE_MISSING_IMAGE_URL'
+  | 'E_GOOGLE_MISSING_FLIGHT_SEMANTICS'
   | 'E_APPLE_INVALID_COLOR'
   | 'E_APPLE_MISSING_TRANSIT_TYPE'
 

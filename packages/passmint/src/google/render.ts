@@ -106,13 +106,30 @@ function maybeToGoogleImage(
   return toGoogleImage(source, field)
 }
 
+/**
+ * Map our barcode encoding to Google's `BarcodeRenderEncoding` enum.
+ *
+ * Google only defines two values:
+ *   - `RENDER_ENCODING_UNSPECIFIED` (the default)
+ *   - `UTF_8` — valid ONLY for `qrCode` barcodes
+ *
+ * Anything else (`ISO_8859_1`, `UTF_16`, etc.) is rejected at save-link time.
+ * See https://developers.google.com/wallet/reference/rest/v1/BarcodeRenderEncoding
+ */
+function googleRenderEncoding(barcode: Barcode): string {
+  if (barcode.format === 'qr' && barcode.messageEncoding === 'utf-8') {
+    return 'UTF_8'
+  }
+  return 'RENDER_ENCODING_UNSPECIFIED'
+}
+
 function renderBarcode(barcode: Barcode): Record<string, unknown> {
   const altText: LocalizedString = barcode.altText ?? barcode.message
   return {
     type: GOOGLE_BARCODE_FORMAT[barcode.format],
     value: barcode.message,
     alternateText: defaultValue(altText),
-    renderEncoding: (barcode.messageEncoding ?? 'iso-8859-1').toUpperCase().replace('-', '_'),
+    renderEncoding: googleRenderEncoding(barcode),
   }
 }
 
@@ -264,25 +281,37 @@ function renderEventTicket(input: PassInput, classId: string, objectId: string):
 }
 
 function renderFlight(input: PassInput, classId: string, objectId: string): StyleResult {
-  const carrierCode = input.semantics?.airlineCode
-  const flightNumber = input.semantics?.flightNumber
+  // Google's FlightClass requires airline + flight number + origin/destination
+  // airport codes. Emitting empty placeholder objects (`{ carrier: {}, ... }`)
+  // produces a JWT that Google rejects at save-link time with an opaque
+  // error, so we fail fast here with a concrete list of what's missing.
+  // See https://developers.google.com/wallet/reference/rest/v1/flightclass
+  const semantics = input.semantics
+  const missing: string[] = []
+  if (semantics?.airlineCode === undefined) missing.push('semantics.airlineCode')
+  if (semantics?.flightNumber === undefined) missing.push('semantics.flightNumber')
+  if (semantics?.departureAirportCode === undefined) missing.push('semantics.departureAirportCode')
+  if (semantics?.arrivalAirportCode === undefined) missing.push('semantics.arrivalAirportCode')
+  if (missing.length > 0) {
+    throw new PassmintRenderError(
+      'E_GOOGLE_MISSING_FLIGHT_SEMANTICS',
+      `Google Wallet flight class requires ${missing.join(', ')} on an air boarding pass. Set them via the pass's \`semantics\` field.`,
+    )
+  }
+
   const classDef: Record<string, unknown> = {
     ...commonClassFields(input, classId),
     flightHeader: {
-      carrier: carrierCode !== undefined ? { carrierIataCode: carrierCode } : {},
-      flightNumber: flightNumber !== undefined ? String(flightNumber) : '',
+      carrier: { carrierIataCode: semantics.airlineCode },
+      flightNumber: String(semantics.flightNumber),
     },
-    origin: input.semantics?.departureAirportCode
-      ? { airportIataCode: input.semantics.departureAirportCode }
-      : {},
-    destination: input.semantics?.arrivalAirportCode
-      ? { airportIataCode: input.semantics.arrivalAirportCode }
-      : {},
+    origin: { airportIataCode: semantics.departureAirportCode },
+    destination: { airportIataCode: semantics.arrivalAirportCode },
   }
   const objectDef: Record<string, unknown> = {
     ...commonObjectFields(input, classId, objectId),
     reservationInfo: {
-      confirmationCode: input.semantics?.confirmationNumber ?? input.serialNumber,
+      confirmationCode: semantics.confirmationNumber ?? input.serialNumber,
     },
   }
   return { classKey: 'flightClasses', objectKey: 'flightObjects', classDef, objectDef }
