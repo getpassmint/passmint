@@ -17,7 +17,7 @@ jobs:
       # Push the "Version Packages" PR and tags.
       contents: write
       pull-requests: write
-      # Required for npm provenance via OIDC.
+      # Required for npm trusted publishing via OIDC.
       id-token: write
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -30,6 +30,11 @@ jobs:
           node-version: '22'
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing requires npm >= 11.5.1. Node 22 still ships with
+      # npm 10.x, so upgrade the globally-installed npm before any publish
+      # step runs. Remove once actions/setup-node ships Node with npm 11+
+      # by default.
+      - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       # Gate the release on the same checks the CI workflow runs.
@@ -51,6 +56,7 @@ jobs:
           commit: 'chore: version packages'
           title: 'chore: version packages'
         env:
+          # Trusted publishing handles npm auth + provenance automatically
+          # via the OIDC token minted by `permissions: id-token: write`.
+          # No NPM_TOKEN needed.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
