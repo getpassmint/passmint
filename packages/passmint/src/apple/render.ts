@@ -242,11 +242,18 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+// Prototype-pollution guard: own-property keys named `__proto__`, `constructor`,
+// or `prototype` (as can appear in JSON.parse output) must never be walked into
+// a bracket assignment on the target.
+const UNSAFE_MERGE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 function deepMerge(
   target: Record<string, unknown>,
   source: Readonly<Record<string, unknown>>,
 ): void {
-  for (const [key, value] of Object.entries(source)) {
+  for (const key of Object.keys(source)) {
+    if (UNSAFE_MERGE_KEYS.has(key)) continue
+    const value = source[key]
     const existing = target[key]
     if (isPlainObject(existing) && isPlainObject(value)) {
       deepMerge(existing, value)

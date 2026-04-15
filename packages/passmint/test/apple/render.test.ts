@@ -235,6 +235,34 @@ describe('renderApplePass — semantics and applyRaw', () => {
     expect(result.passJson.sharingProhibited).toBe(true)
     expect(result.passJson.custom).toEqual({ nested: 'value' })
   })
+
+  it('ignores __proto__/constructor/prototype keys in applyRaw to block prototype pollution', () => {
+    // Simulate a developer forwarding parsed JSON into applyRaw. JSON.parse
+    // produces an own property literally named `__proto__`, which a naive
+    // deepMerge would walk into a bracket assignment and trigger the
+    // Object.prototype.__proto__ setter.
+    const evilApple = JSON.parse(
+      '{"__proto__":{"polluted":"yes"},"constructor":{"hijacked":true},"prototype":{"also":"bad"},"safe":"ok"}',
+    )
+
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'eventTicket',
+      applyRaw: { apple: evilApple },
+    })
+
+    // Safe keys still merge.
+    expect((result.passJson as Record<string, unknown>).safe).toBe('ok')
+
+    // Unsafe keys are not copied to the output.
+    expect(Object.hasOwn(result.passJson, '__proto__')).toBe(false)
+    expect(Object.hasOwn(result.passJson, 'prototype')).toBe(false)
+
+    // And critically, nothing leaked onto Object.prototype.
+    const canary = {} as Record<string, unknown>
+    expect(canary.polluted).toBeUndefined()
+    expect(canary.hijacked).toBeUndefined()
+  })
 })
 
 describe('renderApplePass — web service + locations', () => {

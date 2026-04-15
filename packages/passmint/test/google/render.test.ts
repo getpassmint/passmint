@@ -268,6 +268,35 @@ describe('renderGooglePayload — shared mapping', () => {
     expect(obj.textModulesData).toEqual([{ id: 'override', header: 'x', body: 'y' }])
   })
 
+  it('ignores __proto__/constructor/prototype keys in applyRaw to block prototype pollution', () => {
+    const evilGoogle = JSON.parse(
+      '{"__proto__":{"polluted":"yes"},"constructor":{"hijacked":true},"prototype":{"also":"bad"},"smartTapRedemptionValue":"safe"}',
+    )
+
+    const payload = renderGooglePayload(
+      {
+        ...base,
+        style: 'generic',
+        applyRaw: { google: evilGoogle },
+      },
+      { issuerId },
+    )
+
+    const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<string, unknown>
+
+    // Safe keys still merge.
+    expect(obj.smartTapRedemptionValue).toBe('safe')
+
+    // Unsafe keys are not copied to the output.
+    expect(Object.hasOwn(obj, '__proto__')).toBe(false)
+    expect(Object.hasOwn(obj, 'prototype')).toBe(false)
+
+    // And critically, nothing leaked onto Object.prototype.
+    const canary = {} as Record<string, unknown>
+    expect(canary.polluted).toBeUndefined()
+    expect(canary.hijacked).toBeUndefined()
+  })
+
   it('honors custom classSuffix and objectSuffix', () => {
     const payload = renderGooglePayload(
       { ...base, style: 'generic' },
