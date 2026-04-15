@@ -9,6 +9,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Minimum viable permissions. CI only needs to read the repo — any future
+# step that wants more has to opt in explicitly.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
