@@ -12,11 +12,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "LICENSE",
-    "README.md"
-  ],
+  "files": ["dist", "LICENSE", "README.md"],
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",

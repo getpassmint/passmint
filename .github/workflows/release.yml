@@ -51,7 +51,13 @@ jobs:
           # When there are pending changesets, opens/updates the
           # "Version Packages" PR. When that PR is merged and the
           # changesets are gone, `publish` runs and ships to npm.
-          version: pnpm changeset version
+          #
+          # `pnpm format` after the version bump reformats the files
+          # changesets just wrote (package.json, CHANGELOG.md) through
+          # Biome, so the committed PR is already lint-clean. Without
+          # this, the subsequent release run fails `pnpm lint` because
+          # changesets' JSON writer and Biome disagree on formatting.
+          version: pnpm changeset version && pnpm format
           publish: pnpm changeset publish
           commit: 'chore: version packages'
           title: 'chore: version packages'
