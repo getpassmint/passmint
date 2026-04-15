@@ -18,6 +18,8 @@
 	<p align="center">Issue Apple Wallet and Google Wallet passes from any edge runtime.</p>
 </div>
 
+---
+
 One unified pass schema. Two outputs: a signed `.pkpass` for iOS and a Google Wallet save-link JWT for Android. Zero `node:*` imports, Web Crypto only.
 
 ```ts
