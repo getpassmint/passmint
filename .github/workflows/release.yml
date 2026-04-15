@@ -12,7 +12,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     # Don't run on forks.
-    if: github.repository == 'passmint/passmint-pkg'
+    if: github.repository == 'getpassmint/passmint'
     permissions:
       # Push the "Version Packages" PR and tags.
       contents: write

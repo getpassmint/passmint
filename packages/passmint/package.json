@@ -90,7 +90,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/passmint/passmint-pkg.git",
+    "url": "git+https://github.com/getpassmint/passmint.git",
     "directory": "packages/passmint"
   }
 }
