@@ -286,13 +286,22 @@ function renderFlight(input: PassInput, classId: string, objectId: string): Styl
   // produces a JWT that Google rejects at save-link time with an opaque
   // error, so we fail fast here with a concrete list of what's missing.
   // See https://developers.google.com/wallet/reference/rest/v1/flightclass
-  const semantics = input.semantics
-  const missing: string[] = []
-  if (semantics?.airlineCode === undefined) missing.push('semantics.airlineCode')
-  if (semantics?.flightNumber === undefined) missing.push('semantics.flightNumber')
-  if (semantics?.departureAirportCode === undefined) missing.push('semantics.departureAirportCode')
-  if (semantics?.arrivalAirportCode === undefined) missing.push('semantics.arrivalAirportCode')
-  if (missing.length > 0) {
+  const airlineCode = input.semantics?.airlineCode
+  const flightNumber = input.semantics?.flightNumber
+  const departureAirportCode = input.semantics?.departureAirportCode
+  const arrivalAirportCode = input.semantics?.arrivalAirportCode
+
+  if (
+    airlineCode === undefined ||
+    flightNumber === undefined ||
+    departureAirportCode === undefined ||
+    arrivalAirportCode === undefined
+  ) {
+    const missing: string[] = []
+    if (airlineCode === undefined) missing.push('semantics.airlineCode')
+    if (flightNumber === undefined) missing.push('semantics.flightNumber')
+    if (departureAirportCode === undefined) missing.push('semantics.departureAirportCode')
+    if (arrivalAirportCode === undefined) missing.push('semantics.arrivalAirportCode')
     throw new PassmintRenderError(
       'E_GOOGLE_MISSING_FLIGHT_SEMANTICS',
       `Google Wallet flight class requires ${missing.join(', ')} on an air boarding pass. Set them via the pass's \`semantics\` field.`,
@@ -302,16 +311,16 @@ function renderFlight(input: PassInput, classId: string, objectId: string): Styl
   const classDef: Record<string, unknown> = {
     ...commonClassFields(input, classId),
     flightHeader: {
-      carrier: { carrierIataCode: semantics.airlineCode },
-      flightNumber: String(semantics.flightNumber),
+      carrier: { carrierIataCode: airlineCode },
+      flightNumber: String(flightNumber),
     },
-    origin: { airportIataCode: semantics.departureAirportCode },
-    destination: { airportIataCode: semantics.arrivalAirportCode },
+    origin: { airportIataCode: departureAirportCode },
+    destination: { airportIataCode: arrivalAirportCode },
   }
   const objectDef: Record<string, unknown> = {
     ...commonObjectFields(input, classId, objectId),
     reservationInfo: {
-      confirmationCode: semantics.confirmationNumber ?? input.serialNumber,
+      confirmationCode: input.semantics?.confirmationNumber ?? input.serialNumber,
     },
   }
   return { classKey: 'flightClasses', objectKey: 'flightObjects', classDef, objectDef }
