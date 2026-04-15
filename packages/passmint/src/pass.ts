@@ -85,7 +85,12 @@ export class SignedPass {
       headers.set('content-type', 'application/vnd.apple.pkpass')
     }
     if (!headers.has('content-disposition')) {
-      headers.set('content-disposition', `attachment; filename="${this.serialNumber}.pkpass"`)
+      // The schema already restricts serialNumber to [A-Za-z0-9._-], but
+      // defend in depth in case the value arrived via `Pass.from` on a
+      // schema bypass — strip anything that isn't in the safe set before
+      // interpolating into the quoted filename.
+      const safeSerial = this.serialNumber.replace(/[^A-Za-z0-9._-]/g, '_')
+      headers.set('content-disposition', `attachment; filename="${safeSerial}.pkpass"`)
     }
     // Copy into a standalone ArrayBuffer — avoids a TS 5.7+ generic
     // variance mismatch between Uint8Array<ArrayBufferLike> and BodyInit.

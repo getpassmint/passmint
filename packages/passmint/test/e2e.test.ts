@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { unzipSync } from 'fflate'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { SigningMaterial } from '../src/cms/material'
-import { Pass } from '../src/pass'
+import { Pass, SignedPass } from '../src/pass'
 import { type CmsFixtures, generateCmsFixtures, writeFixtureFile } from './cms/fixtures'
 
 const FAKE_ICON = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
@@ -167,6 +167,19 @@ describe('end-to-end .pkpass assembly', () => {
     expect(response.headers.get('content-disposition')).toContain('response-test.pkpass')
     const bodyBytes = new Uint8Array(await response.arrayBuffer())
     expect(bodyBytes.length).toBe(signed.toUint8Array().length)
+  })
+
+  it('SignedPass.toResponse sanitizes unsafe characters in the filename', () => {
+    // Defense in depth: bypass the schema (which would reject this) by
+    // constructing SignedPass directly, then confirm the Content-Disposition
+    // filename can't be broken out of with `"` or corrupted with CRLF.
+    const signed = new SignedPass(new Uint8Array([0x50, 0x4b]), 'evil"; filename="ha')
+    const response = signed.toResponse()
+    const disposition = response.headers.get('content-disposition') ?? ''
+    // The sanitizer replaces anything outside [A-Za-z0-9._-] with `_`.
+    expect(disposition).toBe('attachment; filename="evil___filename__ha.pkpass"')
+    // And the raw attacker payload is not present anywhere in the header.
+    expect(disposition).not.toContain('"; filename="')
   })
 
   it('SignedPass.toStream yields the full body in one chunk', async () => {

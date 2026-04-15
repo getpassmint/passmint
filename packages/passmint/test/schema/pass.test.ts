@@ -128,6 +128,30 @@ describe('parsePassInput — identity validation', () => {
     const { description: _, ...rest } = validBase
     expect(() => parsePassInput({ style: 'generic', ...rest })).toThrow(PassmintSchemaError)
   })
+
+  it('accepts safe serial numbers', () => {
+    for (const serial of ['ticket-1', 'abc.def_123', 'A'.repeat(64), 'x']) {
+      expect(() => parsePassInput({ style: 'generic', ...validBase, serialNumber: serial })).not.toThrow()
+    }
+  })
+
+  it('rejects serial numbers with unsafe characters (header/filename injection)', () => {
+    // These are the exploit strings from the security review.
+    const unsafe = [
+      'evil"; x-custom="bar', // double-quote break
+      'foo\r\nX-Injected: yes', // CRLF
+      '../../etc/passwd', // path traversal
+      'a b c', // spaces
+      'ñoñó', // non-ASCII
+      '', // empty
+      'A'.repeat(65), // too long
+    ]
+    for (const serial of unsafe) {
+      expect(() =>
+        parsePassInput({ style: 'generic', ...validBase, serialNumber: serial }),
+      ).toThrow(PassmintSchemaError)
+    }
+  })
 })
 
 describe('parsePassInput — dates', () => {

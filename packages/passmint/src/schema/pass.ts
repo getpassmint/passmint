@@ -29,6 +29,22 @@ const PassTypeIdentifierSchema = v.pipe(
 )
 
 /**
+ * Serial number. Alphanumerics plus `._-`, 1–64 characters.
+ *
+ * The character set is deliberately tight — the serial number is interpolated
+ * into `.pkpass` filenames, `Content-Disposition` headers, and webservice
+ * URLs, and any non-URL-safe character there is a footgun. Tightening here
+ * means downstream interpolation sites can trust the value.
+ */
+const SerialNumberSchema = v.pipe(
+  v.string(),
+  v.regex(
+    /^[A-Za-z0-9._-]{1,64}$/,
+    'serialNumber must be 1–64 characters from [A-Za-z0-9._-]',
+  ),
+)
+
+/**
  * 10-character Apple Developer Team ID.
  */
 const TeamIdentifierSchema = v.pipe(
@@ -71,7 +87,7 @@ const ApplyRawSchema = v.optional(
 const PassBaseSchema = v.object({
   // --- identity ---
   passTypeIdentifier: PassTypeIdentifierSchema,
-  serialNumber: v.pipe(v.string(), v.minLength(1)),
+  serialNumber: SerialNumberSchema,
   teamIdentifier: TeamIdentifierSchema,
   organizationName: v.pipe(v.string(), v.minLength(1)),
   description: v.pipe(v.string(), v.minLength(1)),
