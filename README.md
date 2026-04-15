@@ -1,6 +1,22 @@
-# passmint
-
-**Apple Wallet + Google Wallet passes, from any JavaScript runtime.**
+<div align="center">
+	<br>
+	<br>
+	<picture>
+		<source media="(prefers-color-scheme: dark)"
+			srcset="https://github.com/getpassmint/passmint/raw/main/assets/dark.png?sanitize=true"
+			width="600"
+		>
+		<img
+			width="600"
+			alt="light-mode banner"
+			src="https://github.com/getpassmint/passmint/raw/main/assets/light.png?sanitize=true"
+		>
+	</picture>
+	<br>
+	<br>
+  <h3 align="center">passmint</h3>
+	<p align="center">Issue Apple Wallet and Google Wallet passes from any edge runtime.</p>
+</div>
 
 One unified pass schema. Two outputs: a signed `.pkpass` for iOS and a Google Wallet save-link JWT for Android. Zero `node:*` imports, Web Crypto only.
 
