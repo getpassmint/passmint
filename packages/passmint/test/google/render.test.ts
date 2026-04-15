@@ -103,7 +103,10 @@ describe('renderGooglePayload — boarding pass routing', () => {
       semantics: Record<string, unknown> | undefined
       missing: string[]
     }> = [
-      { semantics: undefined, missing: ['airlineCode', 'flightNumber', 'departureAirportCode', 'arrivalAirportCode'] },
+      {
+        semantics: undefined,
+        missing: ['airlineCode', 'flightNumber', 'departureAirportCode', 'arrivalAirportCode'],
+      },
       {
         semantics: { airlineCode: 'AA', flightNumber: 100 },
         missing: ['departureAirportCode', 'arrivalAirportCode'],

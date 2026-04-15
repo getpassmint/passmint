@@ -38,10 +38,7 @@ const PassTypeIdentifierSchema = v.pipe(
  */
 const SerialNumberSchema = v.pipe(
   v.string(),
-  v.regex(
-    /^[A-Za-z0-9._-]{1,64}$/,
-    'serialNumber must be 1–64 characters from [A-Za-z0-9._-]',
-  ),
+  v.regex(/^[A-Za-z0-9._-]{1,64}$/, 'serialNumber must be 1–64 characters from [A-Za-z0-9._-]'),
 )
 
 /**

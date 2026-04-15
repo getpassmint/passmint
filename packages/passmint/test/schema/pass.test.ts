@@ -131,7 +131,9 @@ describe('parsePassInput — identity validation', () => {
 
   it('accepts safe serial numbers', () => {
     for (const serial of ['ticket-1', 'abc.def_123', 'A'.repeat(64), 'x']) {
-      expect(() => parsePassInput({ style: 'generic', ...validBase, serialNumber: serial })).not.toThrow()
+      expect(() =>
+        parsePassInput({ style: 'generic', ...validBase, serialNumber: serial }),
+      ).not.toThrow()
     }
   })
 
