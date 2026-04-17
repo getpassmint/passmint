@@ -18,7 +18,7 @@ export type {
 } from './errors'
 
 // --- The main facade ---
-export { Pass, PassBuilder, SignedPass } from './pass'
+export { Pass, PassBuilder, SignedPass, DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS } from './pass'
 export type { GoogleSaveOptions } from './pass'
 
 // --- Google Wallet (JWT save-link) ---
@@ -44,6 +44,7 @@ export type {
   SigningMaterialFromPemInput,
   SigningMaterialFromParsedInput,
 } from './cms'
+export { MAX_PEM_LENGTH } from './cms/pem'
 
 // --- Low-level Apple pipeline (for advanced use cases) ---
 export { assemblePkpass } from './apple/pkpass'
@@ -56,6 +57,7 @@ export { ZipAssembler } from './zip/assembler'
 
 // --- Schema + validation ---
 export { parsePassInput, PassInputSchema } from './schema/index'
+export { MAX_IMAGE_BYTE_LENGTH } from './schema/images'
 export type {
   PassInput,
   PassStyle,

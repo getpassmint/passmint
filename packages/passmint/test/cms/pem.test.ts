@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pemToDer } from '../../src/cms/pem'
+import { MAX_PEM_LENGTH, pemToDer } from '../../src/cms/pem'
 import { PassmintSigningError } from '../../src/errors'
 
 describe('pemToDer', () => {
@@ -38,5 +38,12 @@ describe('pemToDer', () => {
   it('throws on invalid base64', () => {
     const pem = '-----BEGIN CERTIFICATE-----\n@@@@\n-----END CERTIFICATE-----'
     expect(() => pemToDer(pem)).toThrow(PassmintSigningError)
+  })
+
+  it('rejects oversized PEM input (DoS guard)', () => {
+    // Pad a valid-looking PEM past the hard cap so we hit the length
+    // check before the regex.
+    const huge = `-----BEGIN CERTIFICATE-----\n${'A'.repeat(MAX_PEM_LENGTH)}\n-----END CERTIFICATE-----`
+    expect(() => pemToDer(huge)).toThrowError(/exceeds/)
   })
 })

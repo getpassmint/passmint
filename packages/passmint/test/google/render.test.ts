@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PassmintRenderError } from '../../src/errors'
+import { PassmintGoogleError, PassmintRenderError } from '../../src/errors'
 import { renderGooglePayload } from '../../src/google/render'
 import type { PassInput } from '../../src/schema/pass'
 
@@ -416,5 +416,38 @@ describe('renderGooglePayload — shared mapping', () => {
     const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<string, unknown>
     expect(obj.classId).toBe(`${issuerId}.my-class`)
     expect(obj.id).toBe(`${issuerId}.my-object`)
+  })
+
+  describe('suffix validation', () => {
+    it.each([
+      ['contains space', 'my class'],
+      ['contains slash', 'my/class'],
+      ['contains colon', 'my:class'],
+      ['contains newline', 'a\nb'],
+      ['contains semicolon', 'a;b'],
+      ['empty string', ''],
+      ['too long', 'a'.repeat(101)],
+    ])('rejects classSuffix that %s', (_desc, bad) => {
+      expect(() =>
+        renderGooglePayload({ ...base, style: 'generic' }, { issuerId, classSuffix: bad }),
+      ).toThrow(PassmintGoogleError)
+    })
+
+    it('rejects bad objectSuffix too', () => {
+      expect(() =>
+        renderGooglePayload({ ...base, style: 'generic' }, { issuerId, objectSuffix: 'a b' }),
+      ).toThrow(PassmintGoogleError)
+    })
+
+    it('accepts Google-legal suffix charset', () => {
+      for (const suffix of ['abc123', 'a.b.c', 'a-b_c.d', 'X']) {
+        expect(() =>
+          renderGooglePayload(
+            { ...base, style: 'generic' },
+            { issuerId, classSuffix: suffix, objectSuffix: suffix },
+          ),
+        ).not.toThrow()
+      }
+    })
   })
 })

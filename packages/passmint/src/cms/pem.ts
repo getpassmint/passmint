@@ -1,5 +1,13 @@
 import { PassmintSigningError } from '../errors'
 
+/**
+ * Hard cap on PEM input size: 100 KiB. Real-world PEMs (certs, private
+ * keys, bundles) are a few KB. Anything larger is either malformed or
+ * malicious — regardless of which, we should fail fast rather than
+ * letting `atob` allocate a multi-MB string on an edge isolate.
+ */
+export const MAX_PEM_LENGTH = 100 * 1024
+
 export interface PemDecodeOptions {
   /**
    * If provided, the PEM label (e.g. "CERTIFICATE", "PRIVATE KEY") must
@@ -16,9 +24,15 @@ export interface PemDecodeOptions {
  * runtime (Node 20+, Workers, Vercel Edge, Deno, Bun).
  *
  * @throws {PassmintSigningError} with code `E_PEM_DECODE` on malformed
- *   input or label mismatch.
+ *   input, oversized input, or label mismatch.
  */
 export function pemToDer(pem: string, options: PemDecodeOptions = {}): Uint8Array {
+  if (pem.length > MAX_PEM_LENGTH) {
+    throw new PassmintSigningError(
+      'E_PEM_DECODE',
+      `PEM input exceeds ${MAX_PEM_LENGTH} characters (got ${pem.length}). Check that you're passing a single PEM block, not a concatenated bundle.`,
+    )
+  }
   const match = pem.match(/-----BEGIN ([^-]+)-----([\s\S]+?)-----END \1-----/)
   const label = match?.[1]
   const body = match?.[2]

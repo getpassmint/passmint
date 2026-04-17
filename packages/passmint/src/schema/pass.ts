@@ -6,6 +6,7 @@ import { ImagesSchema } from './images'
 import { LocalizedStringSchema } from './localization'
 import { BeaconSchema, LocationSchema } from './locations'
 import { SemanticTagsSchema } from './semantic-tags'
+import { HttpsUrlSchema } from './url'
 
 /**
  * ISO 8601 date/time string with timezone. Matches Apple's format requirement
@@ -59,22 +60,74 @@ const LocalizationSchema = v.record(v.string(), v.string())
 
 /**
  * Web service configuration for pass updates. Apple-only.
+ *
+ * `url` must be HTTPS — Apple's spec requires it, and modern iOS rejects
+ * non-HTTPS webServiceURL at install time. Older iOS was more permissive,
+ * so we enforce this at the schema layer instead of relying on device-side
+ * rejection.
  */
 const WebServiceSchema = v.object({
-  url: v.pipe(v.string(), v.url()),
+  url: HttpsUrlSchema,
   authToken: v.pipe(v.string(), v.minLength(16, 'authToken must be at least 16 characters')),
 })
 
 /**
  * Platform-specific escape hatch. Deep-merged into the rendered output
- * after the unified render step. Power users only.
+ * after the unified render step. Power users only — `applyRaw` is NOT
+ * validated for field types and must never be populated from untrusted
+ * input directly.
+ *
+ * Identity fields are explicitly denied here: even the escape hatch
+ * cannot overwrite `passTypeIdentifier`, `teamIdentifier`, `serialNumber`,
+ * `authenticationToken`, or `webServiceURL` on the Apple side, nor `id`,
+ * `classId`, or `state` on the Google side. These fields have regex /
+ * shape constraints the rest of the library depends on (serial-number
+ * sanitization feeds downstream URL + filename interpolation; identifiers
+ * are matched against the signing cert's Common Name; etc.). If a caller
+ * needs to change one of these values, they should change the validated
+ * top-level field, not route around it through `applyRaw`.
  */
 const UnknownValueSchema = v.unknown() as v.GenericSchema<unknown>
 
+const APPLE_APPLYRAW_LOCKED_KEYS = [
+  'passTypeIdentifier',
+  'teamIdentifier',
+  'serialNumber',
+  'authenticationToken',
+  'webServiceURL',
+] as const
+
+const GOOGLE_APPLYRAW_LOCKED_KEYS = ['id', 'classId', 'state'] as const
+
+function rejectLockedKeys(locked: readonly string[]): (record: Record<string, unknown>) => boolean {
+  return (record) => {
+    for (const key of locked) {
+      if (Object.hasOwn(record, key)) return false
+    }
+    return true
+  }
+}
+
 const ApplyRawSchema = v.optional(
   v.object({
-    apple: v.optional(v.record(v.string(), UnknownValueSchema)),
-    google: v.optional(v.record(v.string(), UnknownValueSchema)),
+    apple: v.optional(
+      v.pipe(
+        v.record(v.string(), UnknownValueSchema),
+        v.check(
+          rejectLockedKeys(APPLE_APPLYRAW_LOCKED_KEYS),
+          `applyRaw.apple cannot override identity fields (${APPLE_APPLYRAW_LOCKED_KEYS.join(', ')}) — set them at the top level instead`,
+        ),
+      ),
+    ),
+    google: v.optional(
+      v.pipe(
+        v.record(v.string(), UnknownValueSchema),
+        v.check(
+          rejectLockedKeys(GOOGLE_APPLYRAW_LOCKED_KEYS),
+          `applyRaw.google cannot override identity fields (${GOOGLE_APPLYRAW_LOCKED_KEYS.join(', ')}) — use classSuffix / objectSuffix instead`,
+        ),
+      ),
+    ),
   }),
 )
 

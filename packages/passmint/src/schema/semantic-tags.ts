@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { HttpsUrlSchema } from './url'
 
 /**
  * A machine-readable semantic tag value. Apple's semantic tag schema
@@ -49,7 +50,7 @@ export const SemanticTagsSchema = v.object({
   duration: v.optional(v.number()),
   silenceRequested: v.optional(v.boolean()),
   customerServiceNumber: v.optional(v.string()),
-  homepage: v.optional(v.pipe(v.string(), v.url())),
+  homepage: v.optional(HttpsUrlSchema),
 
   // --- Event tickets ---
   eventName: v.optional(v.string()),
@@ -122,7 +123,7 @@ export const SemanticTagsSchema = v.object({
   orderNumber: v.optional(v.string()),
   orderDate: v.optional(v.string()),
   orderStatus: v.optional(v.string()),
-  orderManagementUrl: v.optional(v.pipe(v.string(), v.url())),
+  orderManagementUrl: v.optional(HttpsUrlSchema),
   orderTrackingNumber: v.optional(v.string()),
 })
 

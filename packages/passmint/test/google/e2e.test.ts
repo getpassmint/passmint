@@ -101,4 +101,81 @@ describe('Pass.toGoogleSaveLink — end to end', () => {
     expect(jwt.split('.')).toHaveLength(3)
     expect(jwt.startsWith('https://')).toBe(false)
   })
+
+  it('default-exp: toGoogleJwt adds a 15-minute exp claim by default', async () => {
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.generic',
+      serialNumber: 'g-default-exp',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'exp default',
+      images: { icon: { x2: { bytes: FAKE_ICON } } },
+    }).build()
+
+    const before = Math.floor(Date.now() / 1000)
+    const jwt = await pass.toGoogleJwt(material, { origins: ['example.com'] })
+    const after = Math.floor(Date.now() / 1000)
+
+    const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(jwt.split('.')[1]!)))
+    expect(claims.exp).toBeDefined()
+    expect(claims.iat).toBeDefined()
+    // exp must be ~900 seconds (15 min) past iat.
+    expect(claims.exp - claims.iat).toBe(15 * 60)
+    // iat must be within the [before, after] capture window.
+    expect(claims.iat).toBeGreaterThanOrEqual(before)
+    expect(claims.iat).toBeLessThanOrEqual(after)
+  })
+
+  it('custom-exp: toGoogleJwt honours expirySeconds', async () => {
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.generic',
+      serialNumber: 'g-custom-exp',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'exp custom',
+      images: { icon: { x2: { bytes: FAKE_ICON } } },
+    }).build()
+
+    const jwt = await pass.toGoogleJwt(material, {
+      origins: ['example.com'],
+      expirySeconds: 60,
+    })
+    const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(jwt.split('.')[1]!)))
+    expect(claims.exp - claims.iat).toBe(60)
+  })
+
+  it('no-exp: passing expirySeconds: null omits the exp claim', async () => {
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.generic',
+      serialNumber: 'g-no-exp',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'exp omitted',
+      images: { icon: { x2: { bytes: FAKE_ICON } } },
+    }).build()
+
+    const jwt = await pass.toGoogleJwt(material, {
+      origins: ['example.com'],
+      expirySeconds: null,
+    })
+    const claims = JSON.parse(new TextDecoder().decode(b64urlToBytes(jwt.split('.')[1]!)))
+    expect(Object.hasOwn(claims, 'exp')).toBe(false)
+  })
+
+  it('rejects invalid expirySeconds', async () => {
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.generic',
+      serialNumber: 'g-bad-exp',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'bad exp',
+      images: { icon: { x2: { bytes: FAKE_ICON } } },
+    }).build()
+
+    for (const bad of [0, -5, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      await expect(
+        pass.toGoogleJwt(material, { origins: ['example.com'], expirySeconds: bad }),
+      ).rejects.toThrow(/expirySeconds must be a positive integer/)
+    }
+  })
 })

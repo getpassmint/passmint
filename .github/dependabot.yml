@@ -1,0 +1,43 @@
+# Dependabot config — weekly dependency updates, grouped where it makes
+# sense so PRs don't fan out across the @peculiar/asn1-* family.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      # @peculiar/asn1-* are versioned together in practice; group their
+      # bumps into a single PR to keep CI runs manageable.
+      peculiar-asn1:
+        patterns:
+          - '@peculiar/asn1-*'
+      # TypeScript tooling and dev deps in one PR.
+      dev-tooling:
+        dependency-type: development
+        patterns:
+          - 'typescript'
+          - '@biomejs/*'
+          - 'turbo'
+          - 'tsdown'
+          - 'vitest'
+          - '@cloudflare/vitest-pool-workers'
+          - '@changesets/*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/London
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci

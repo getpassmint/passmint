@@ -39,6 +39,15 @@ export interface GoogleSaveJwtClaims {
   typ: 'savetowallet'
   /** Issued-at timestamp in seconds. */
   iat: number
+  /**
+   * Expiration timestamp in seconds. Optional; if omitted, the save link
+   * never expires (Google accepts the JWT until the underlying pass
+   * object is saved or revoked). Strongly recommended — save links are
+   * routinely forwarded via email, cached by proxies, and indexed by
+   * corporate archivers. Passmint's `Pass.toGoogleSaveLink` /
+   * `Pass.toGoogleJwt` set a 15-minute default.
+   */
+  exp?: number
   /** Allowed origin domains. */
   origins: readonly string[]
   /** Payload containing class + object arrays for each pass type. */
@@ -91,7 +100,18 @@ export async function signSaveJwt(
   material: GoogleSigningMaterial,
 ): Promise<string> {
   const header = { alg: 'RS256', typ: 'JWT' }
-  const signingInput = `${base64urlJson(header)}.${base64urlJson(claims)}`
+  // Rebuild claims with a stable key order so the emitted JWT is
+  // deterministic for a given input (helps tests, logs, cache keys).
+  const orderedClaims: Record<string, unknown> = {
+    iss: claims.iss,
+    aud: claims.aud,
+    typ: claims.typ,
+    iat: claims.iat,
+  }
+  if (claims.exp !== undefined) orderedClaims.exp = claims.exp
+  orderedClaims.origins = claims.origins
+  orderedClaims.payload = claims.payload
+  const signingInput = `${base64urlJson(header)}.${base64urlJson(orderedClaims)}`
   let signatureBytes: Uint8Array
   try {
     signatureBytes = new Uint8Array(

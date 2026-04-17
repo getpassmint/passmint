@@ -1,4 +1,4 @@
-import { PassmintRenderError } from '../errors'
+import { PassmintGoogleError, PassmintRenderError } from '../errors'
 import type { Barcode } from '../schema/barcodes'
 import type { Field } from '../schema/fields'
 import type { ImageSource } from '../schema/images'
@@ -421,12 +421,30 @@ function renderGeneric(input: PassInput, classId: string, objectId: string): Sty
  * @throws {PassmintRenderError} if a Google constraint is violated
  *   (e.g., an image is provided as bytes when Google requires a URL).
  */
+// Google Wallet class/object IDs are restricted to [A-Za-z0-9._-]. Feeding
+// anything outside this charset produces a JWT that Google rejects at
+// save-link time with an opaque error, so we validate early and surface
+// a concrete message instead. Length cap mirrors the practical ceiling
+// on Google's side — 100 chars is well above any real suffix.
+const GOOGLE_ID_SUFFIX = /^[A-Za-z0-9._-]{1,100}$/
+
+function validateSuffix(value: string, field: 'classSuffix' | 'objectSuffix'): void {
+  if (!GOOGLE_ID_SUFFIX.test(value)) {
+    throw new PassmintGoogleError(
+      'E_GOOGLE_RENDER',
+      `Invalid ${field}: ${JSON.stringify(value)}. Must match ${GOOGLE_ID_SUFFIX.source} (Google-allowed charset [A-Za-z0-9._-], 1–100 chars).`,
+    )
+  }
+}
+
 export function renderGooglePayload(
   input: PassInput,
   options: GoogleRenderOptions,
 ): GoogleSavePayload {
   const classSuffix = options.classSuffix ?? `${input.serialNumber}-class`
   const objectSuffix = options.objectSuffix ?? input.serialNumber
+  validateSuffix(classSuffix, 'classSuffix')
+  validateSuffix(objectSuffix, 'objectSuffix')
   const classId = `${options.issuerId}.${classSuffix}`
   const objectId = `${options.issuerId}.${objectSuffix}`
 

@@ -1,5 +1,6 @@
 import { assemblePkpass } from './apple/pkpass'
 import type { SigningMaterial } from './cms'
+import { PassmintGoogleError } from './errors'
 import { type GoogleSaveJwtClaims, signSaveJwt } from './google/jwt'
 import type { GoogleSigningMaterial } from './google/material'
 import { type GoogleRenderOptions, renderGooglePayload } from './google/render'
@@ -19,6 +20,14 @@ import type {
 import type { SemanticTags } from './schema/semantic-tags'
 
 /**
+ * Default save-link JWT lifetime: 15 minutes. Long enough to cover a
+ * normal user journey (email click, browser load, save), short enough
+ * to neutralize most forwarded-URL replay scenarios. Callers can
+ * override via `GoogleSaveOptions.expirySeconds`.
+ */
+export const DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS = 15 * 60
+
+/**
  * Options for generating a Google Wallet save-link JWT. Passed to
  * {@link Pass.toGoogleJwt} and {@link Pass.toGoogleSaveLink}.
  */
@@ -29,6 +38,13 @@ export interface GoogleSaveOptions extends Omit<GoogleRenderOptions, 'issuerId'>
    * real application domains (no protocol, no trailing slash).
    */
   origins: readonly string[]
+  /**
+   * JWT lifetime in seconds, relative to `iat`. Defaults to 15 minutes
+   * (see {@link DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS}). Set to `null` to
+   * omit the `exp` claim entirely (not recommended — leaked save URLs
+   * remain valid indefinitely). Values ≤ 0 throw.
+   */
+  expirySeconds?: number | null
 }
 
 /**
@@ -177,14 +193,32 @@ export class Pass {
     if (options.classSuffix !== undefined) renderOptions.classSuffix = options.classSuffix
     if (options.objectSuffix !== undefined) renderOptions.objectSuffix = options.objectSuffix
     const payload = renderGooglePayload(this.input, renderOptions)
+    const iat = Math.floor(Date.now() / 1000)
+    // `expirySeconds === null` is an explicit opt-out; undefined uses the
+    // default; any positive finite integer wins. We reject NaN, Infinity,
+    // non-integers, and ≤ 0 values up front — each would either produce
+    // an expired JWT (≤ 0) or a non-integer `exp` that JSON.stringify
+    // turns into `null` (NaN / Infinity) or that Google's JWT validator
+    // silently coerces (fractional seconds).
+    const expirySeconds =
+      options.expirySeconds === undefined
+        ? DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS
+        : options.expirySeconds
+    if (expirySeconds !== null && (!Number.isInteger(expirySeconds) || expirySeconds <= 0)) {
+      throw new PassmintGoogleError(
+        'E_JWT_SIGN',
+        `expirySeconds must be a positive integer or null (got ${expirySeconds}).`,
+      )
+    }
     const claims: GoogleSaveJwtClaims = {
       iss: material.clientEmail,
       aud: 'google',
       typ: 'savetowallet',
-      iat: Math.floor(Date.now() / 1000),
+      iat,
       origins: options.origins,
       payload,
     }
+    if (expirySeconds !== null) claims.exp = iat + expirySeconds
     return signSaveJwt(claims, material)
   }
 

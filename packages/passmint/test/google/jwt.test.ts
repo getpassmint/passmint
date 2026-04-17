@@ -102,6 +102,42 @@ describe('signSaveJwt', () => {
     expect(ok).toBe(true)
   })
 
+  it('emits an `exp` claim when provided', async () => {
+    const iat = 1234567890
+    const exp = iat + 900
+    const jwt = await signSaveJwt(
+      {
+        iss: material.clientEmail,
+        aud: 'google',
+        typ: 'savetowallet',
+        iat,
+        exp,
+        origins: ['example.com'],
+        payload: { genericObjects: [{}] },
+      },
+      material,
+    )
+    const claims = decodeJwtPart<Record<string, unknown>>(jwt.split('.')[1]!)
+    expect(claims.exp).toBe(exp)
+    expect(claims.iat).toBe(iat)
+  })
+
+  it('omits `exp` when not provided', async () => {
+    const jwt = await signSaveJwt(
+      {
+        iss: material.clientEmail,
+        aud: 'google',
+        typ: 'savetowallet',
+        iat: 1234567890,
+        origins: ['example.com'],
+        payload: { genericObjects: [{}] },
+      },
+      material,
+    )
+    const claims = decodeJwtPart<Record<string, unknown>>(jwt.split('.')[1]!)
+    expect(Object.hasOwn(claims, 'exp')).toBe(false)
+  })
+
   it('a tampered signing input fails verification', async () => {
     const jwt = await signSaveJwt(
       {

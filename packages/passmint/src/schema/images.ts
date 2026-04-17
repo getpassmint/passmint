@@ -1,17 +1,39 @@
 import * as v from 'valibot'
+import { HttpsUrlSchema } from './url'
 
 /**
- * An image source: either inline bytes (Apple-native) or a public HTTPS URL
- * (Google-native).
+ * Hard cap on inline image bytes: 5 MiB per image. Well above realistic
+ * pass icon / strip / background sizes (those are typically ~200 KB each),
+ * and below the memory budget of every target edge runtime (Cloudflare
+ * Workers ~128 MB per request).
+ *
+ * Prevents a single bad caller input from ballooning the ZIP allocation
+ * and OOMing an edge isolate. If you need larger images, split into a
+ * separate service that pre-optimizes them before handing bytes to
+ * passmint — or open an issue with a concrete use case.
+ */
+export const MAX_IMAGE_BYTE_LENGTH = 5 * 1024 * 1024
+
+/**
+ * An image source: either inline bytes (Apple-native, capped at
+ * {@link MAX_IMAGE_BYTE_LENGTH}) or a public HTTPS URL (Google-native).
  *
  * Apple `.pkpass` files require inline image bytes embedded in the ZIP.
- * Google Wallet requires HTTPS URIs. The schema accepts either; the render
- * layer enforces the platform-specific requirement and throws
- * `PassmintRenderError` with actionable guidance on mismatch.
+ * Google Wallet requires HTTPS URIs (scheme enforced at the schema layer).
+ * The render layer enforces the platform-specific bytes-vs-url requirement
+ * and throws `PassmintRenderError` with actionable guidance on mismatch.
  */
 export const ImageSourceSchema = v.union([
-  v.object({ bytes: v.instance(Uint8Array) }),
-  v.object({ url: v.pipe(v.string(), v.url()) }),
+  v.object({
+    bytes: v.pipe(
+      v.instance(Uint8Array),
+      v.check(
+        (u) => u.byteLength <= MAX_IMAGE_BYTE_LENGTH,
+        `Image bytes exceed ${MAX_IMAGE_BYTE_LENGTH} bytes (${MAX_IMAGE_BYTE_LENGTH / 1024 / 1024} MiB) — resize or compress before adding to the pass.`,
+      ),
+    ),
+  }),
+  v.object({ url: HttpsUrlSchema }),
 ])
 
 export type ImageSource = v.InferOutput<typeof ImageSourceSchema>
@@ -45,7 +67,7 @@ export const ImagesSchema = v.object({
    */
   heroImage: v.optional(
     v.object({
-      url: v.pipe(v.string(), v.url()),
+      url: HttpsUrlSchema,
     }),
   ),
 })

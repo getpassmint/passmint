@@ -24,12 +24,43 @@ export class ZipAssembler {
   /**
    * Add a file at the given relative path. Later calls with the same
    * path replace earlier ones.
+   *
+   * Rejects traversal-shaped paths (`..` segments, backslashes, drive-letter
+   * prefixes). The internal `.pkpass` pipeline never hits these rules
+   * because it only uses hardcoded or schema-validated paths — but
+   * `ZipAssembler` is part of the public API, so defense-in-depth keeps
+   * downstream consumers from accidentally producing ZIP-Slip-vulnerable
+   * archives when they build ZIPs from untrusted filenames.
    */
   add(path: string, content: Uint8Array): this {
     if (path === '' || path.startsWith('/')) {
       throw new PassmintPackagingError(
         'E_ZIP',
         `Invalid zip entry path: "${path}". Use forward-slash separated relative paths.`,
+      )
+    }
+    if (path.includes('\0')) {
+      throw new PassmintPackagingError(
+        'E_ZIP',
+        'Invalid zip entry path: contains a NUL byte. Some extractors C-string-truncate on NUL, which smuggles unexpected paths.',
+      )
+    }
+    if (path.includes('\\')) {
+      throw new PassmintPackagingError(
+        'E_ZIP',
+        `Invalid zip entry path: "${path}". Backslashes are not allowed; use forward slashes.`,
+      )
+    }
+    if (/^[A-Za-z]:/.test(path)) {
+      throw new PassmintPackagingError(
+        'E_ZIP',
+        `Invalid zip entry path: "${path}". Drive-letter prefixes are not allowed.`,
+      )
+    }
+    if (path.split('/').includes('..')) {
+      throw new PassmintPackagingError(
+        'E_ZIP',
+        `Invalid zip entry path: "${path}". Path traversal segments ("..") are not allowed.`,
       )
     }
     this.files[path] = content

@@ -242,6 +242,66 @@ describe('parsePassInput — error preserves issues', () => {
   })
 })
 
+describe('parsePassInput — webService HTTPS-only', () => {
+  it('accepts https:// webService.url', () => {
+    const pass = parsePassInput({
+      style: 'generic',
+      ...validBase,
+      webService: {
+        url: 'https://api.example.com/pass/v1',
+        authToken: 'super-secret-token-123',
+      },
+    })
+    expect(pass.webService?.url).toBe('https://api.example.com/pass/v1')
+  })
+
+  it.each([
+    ['http://api.example.com/pass/v1'],
+    ['file:///etc/passwd'],
+    ['javascript:alert(1)'],
+    ['data:text/html,<script>'],
+    ['ftp://example.com/'],
+  ])('rejects non-HTTPS webService.url %s', (url) => {
+    expect(() =>
+      parsePassInput({
+        style: 'generic',
+        ...validBase,
+        webService: { url, authToken: 'super-secret-token-123' },
+      }),
+    ).toThrow(PassmintSchemaError)
+  })
+
+  it('rejects https://  semantic-tag homepage on http://', () => {
+    expect(() =>
+      parsePassInput({
+        style: 'generic',
+        ...validBase,
+        semantics: { homepage: 'http://example.com' },
+      }),
+    ).toThrow(PassmintSchemaError)
+  })
+
+  it('rejects http:// for image URL', () => {
+    expect(() =>
+      parsePassInput({
+        style: 'generic',
+        ...validBase,
+        images: { icon: { x2: { url: 'http://cdn.example.com/icon.png' } } },
+      }),
+    ).toThrow(PassmintSchemaError)
+  })
+
+  it('accepts https:// for image URL', () => {
+    expect(() =>
+      parsePassInput({
+        style: 'generic',
+        ...validBase,
+        images: { icon: { x2: { url: 'https://cdn.example.com/icon.png' } } },
+      }),
+    ).not.toThrow()
+  })
+})
+
 describe('parsePassInput — applyRaw escape hatch', () => {
   it('accepts arbitrary apple and google overrides', () => {
     const pass = parsePassInput({
@@ -254,5 +314,55 @@ describe('parsePassInput — applyRaw escape hatch', () => {
     })
     expect(pass.applyRaw?.apple).toBeDefined()
     expect(pass.applyRaw?.google).toBeDefined()
+  })
+
+  it.each([
+    ['passTypeIdentifier', 'pass.com.attacker.forgery'],
+    ['teamIdentifier', 'ATTACKERXX'],
+    ['serialNumber', '../../evil'],
+    ['authenticationToken', 'attacker-controlled-token'],
+    ['webServiceURL', 'https://evil.com/harvest'],
+  ])('rejects applyRaw.apple.%s (identity override)', (key, value) => {
+    expect(() =>
+      parsePassInput({
+        style: 'eventTicket',
+        ...validBase,
+        applyRaw: { apple: { [key]: value } },
+      }),
+    ).toThrow(PassmintSchemaError)
+  })
+
+  it.each([
+    ['id', 'forged-id'],
+    ['classId', '123.forged-class'],
+    ['state', 'INACTIVE'],
+  ])('rejects applyRaw.google.%s (identity override)', (key, value) => {
+    expect(() =>
+      parsePassInput({
+        style: 'eventTicket',
+        ...validBase,
+        applyRaw: { google: { [key]: value } },
+      }),
+    ).toThrow(PassmintSchemaError)
+  })
+
+  it('still allows safe applyRaw.apple fields like sharingProhibited', () => {
+    expect(() =>
+      parsePassInput({
+        style: 'eventTicket',
+        ...validBase,
+        applyRaw: { apple: { sharingProhibited: true, voided: false } },
+      }),
+    ).not.toThrow()
+  })
+
+  it('still allows safe applyRaw.google fields like rotatingBarcode', () => {
+    expect(() =>
+      parsePassInput({
+        style: 'eventTicket',
+        ...validBase,
+        applyRaw: { google: { rotatingBarcode: { type: 'QR_CODE' } } },
+      }),
+    ).not.toThrow()
   })
 })

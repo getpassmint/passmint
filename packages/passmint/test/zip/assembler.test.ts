@@ -39,6 +39,48 @@ describe('ZipAssembler', () => {
     expect(() => zip.add('/abs', new Uint8Array())).toThrow(PassmintPackagingError)
   })
 
+  it('rejects path traversal segments (ZIP Slip hardening)', () => {
+    const zip = new ZipAssembler()
+    // Standard traversal — POSIX style.
+    expect(() => zip.add('../evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    expect(() => zip.add('a/../evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    expect(() => zip.add('a/b/../../evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    // Trailing .. segment.
+    expect(() => zip.add('a/..', new Uint8Array())).toThrow(PassmintPackagingError)
+    // A literal ".." filename is also rejected — even though it's technically
+    // a single-segment name, no legitimate pkpass entry uses it.
+    expect(() => zip.add('..', new Uint8Array())).toThrow(PassmintPackagingError)
+  })
+
+  it('rejects backslash path separators (Windows traversal)', () => {
+    const zip = new ZipAssembler()
+    expect(() => zip.add('..\\evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    expect(() => zip.add('a\\b', new Uint8Array())).toThrow(PassmintPackagingError)
+  })
+
+  it('rejects drive-letter prefixes', () => {
+    const zip = new ZipAssembler()
+    expect(() => zip.add('C:/evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    expect(() => zip.add('c:evil', new Uint8Array())).toThrow(PassmintPackagingError)
+  })
+
+  it('rejects NUL bytes in paths (C-string truncation smuggling)', () => {
+    const zip = new ZipAssembler()
+    expect(() => zip.add('safe.png\0../evil', new Uint8Array())).toThrow(PassmintPackagingError)
+    expect(() => zip.add('\0', new Uint8Array())).toThrow(PassmintPackagingError)
+  })
+
+  it('still accepts legitimate relative paths including dots in filenames', () => {
+    const zip = new ZipAssembler()
+    expect(() => zip.add('pass.json', new Uint8Array())).not.toThrow()
+    expect(() => zip.add('icon@2x.png', new Uint8Array())).not.toThrow()
+    expect(() => zip.add('en.lproj/pass.strings', new Uint8Array())).not.toThrow()
+    // A dot-prefixed filename (single segment, not traversal) is fine.
+    expect(() => zip.add('.hidden', new Uint8Array())).not.toThrow()
+    // A filename containing two dots but not a segment of `..` is fine.
+    expect(() => zip.add('a..b', new Uint8Array())).not.toThrow()
+  })
+
   it('handles an empty archive', () => {
     const zip = new ZipAssembler()
     const bytes = zip.finalize()

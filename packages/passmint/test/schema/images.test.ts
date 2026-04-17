@@ -1,6 +1,11 @@
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
-import { ImageSourceSchema, ImageTripleSchema, ImagesSchema } from '../../src/schema/images'
+import {
+  ImageSourceSchema,
+  ImageTripleSchema,
+  ImagesSchema,
+  MAX_IMAGE_BYTE_LENGTH,
+} from '../../src/schema/images'
 
 const FAKE_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
 
@@ -25,6 +30,18 @@ describe('ImageSourceSchema', () => {
 
   it('rejects a non-URL string', () => {
     expect(v.safeParse(ImageSourceSchema, { url: 'not-a-url' }).success).toBe(false)
+  })
+
+  it('rejects image bytes larger than the cap (edge-runtime memory guard)', () => {
+    const oversized = new Uint8Array(MAX_IMAGE_BYTE_LENGTH + 1)
+    const r = v.safeParse(ImageSourceSchema, { bytes: oversized })
+    expect(r.success).toBe(false)
+  })
+
+  it('accepts image bytes exactly at the cap', () => {
+    const atLimit = new Uint8Array(MAX_IMAGE_BYTE_LENGTH)
+    const r = v.safeParse(ImageSourceSchema, { bytes: atLimit })
+    expect(r.success).toBe(true)
   })
 })
 
