@@ -62,7 +62,7 @@ jobs:
           # Biome, so the committed PR is already lint-clean. Without
           # this, the subsequent release run fails `pnpm lint` because
           # changesets' JSON writer and Biome disagree on formatting.
-          version: pnpm changeset version && pnpm format
+          version: pnpm run version-packages
           publish: pnpm changeset publish
           commit: 'chore: version packages'
           title: 'chore: version packages'
