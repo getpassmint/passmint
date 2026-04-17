@@ -2,30 +2,29 @@ import * as v from 'valibot'
 import { PassmintSchemaError } from '../errors'
 import { type PassInput, PassInputSchema } from './pass'
 
-export { PassInputSchema } from './pass'
-export type {
-  PassInput,
-  PassStyle,
-  BoardingPassInput,
-  EventTicketInput,
-  StoreCardInput,
-  CouponInput,
-  GenericPassInput,
-} from './pass'
-
-export type { LocalizedString } from './localization'
-export type { Color } from './colors'
-export type { ImageSource, ImageTriple, Images } from './images'
 export type { Barcode, BarcodeFormat } from './barcodes'
+export type { Color } from './colors'
 export type {
+  DataDetector,
+  DateTimeStyle,
   Field,
   FieldValue,
-  TextAlignment,
-  DateTimeStyle,
   NumberStyle,
-  DataDetector,
+  TextAlignment,
 } from './fields'
-export type { Location, Beacon } from './locations'
+export type { ImageSource, Images, ImageTriple } from './images'
+export type { LocalizedString } from './localization'
+export type { Beacon, Location } from './locations'
+export type {
+  BoardingPassInput,
+  CouponInput,
+  EventTicketInput,
+  GenericPassInput,
+  PassInput,
+  PassStyle,
+  StoreCardInput,
+} from './pass'
+export { PassInputSchema } from './pass'
 export type { SemanticTags } from './semantic-tags'
 
 /**

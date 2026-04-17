@@ -1,13 +1,21 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": { "enabled": true },
+  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "ignore": ["dist", "node_modules", ".turbo", "coverage", "research", ".scratch"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/node_modules",
+      "!**/.turbo",
+      "!**/coverage",
+      "!**/research",
+      "!**/.scratch"
+    ]
   },
   "linter": {
     "enabled": true,
@@ -17,17 +25,7 @@
         "useImportType": "error",
         "useNodejsImportProtocol": "error",
         "useConst": "error",
-        "noNonNullAssertion": "error"
-      },
-      "correctness": {
-        "noUnusedImports": "error",
-        "noUnusedVariables": "error"
-      },
-      "suspicious": {
-        "noConsoleLog": "error",
-        "noExplicitAny": "error"
-      },
-      "nursery": {
+        "noNonNullAssertion": "error",
         "noRestrictedImports": {
           "level": "error",
           "options": {
@@ -41,7 +39,16 @@
             }
           }
         }
-      }
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noConsole": "error"
+      },
+      "nursery": {}
     }
   },
   "formatter": {
@@ -60,17 +67,16 @@
   },
   "overrides": [
     {
-      "include": ["**/test/**", "**/*.test.ts", "**/scripts/**", "examples/**"],
+      "includes": ["**/test/**", "**/*.test.ts", "**/scripts/**", "**/examples/**"],
       "linter": {
         "rules": {
-          "nursery": {
-            "noRestrictedImports": "off"
-          },
+          "nursery": {},
           "suspicious": {
-            "noConsoleLog": "off"
+            "noConsole": "off"
           },
           "style": {
-            "noNonNullAssertion": "off"
+            "noNonNullAssertion": "off",
+            "noRestrictedImports": "off"
           }
         }
       }
