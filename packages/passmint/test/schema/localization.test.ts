@@ -1,9 +1,9 @@
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import {
+  defaultValue,
   LanguageTagSchema,
   LocalizedStringSchema,
-  defaultValue,
   translations,
 } from '../../src/schema/localization'
 

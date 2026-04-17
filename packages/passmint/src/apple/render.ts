@@ -1,9 +1,9 @@
 import { PassmintRenderError } from '../errors'
 import type { Barcode } from '../schema/barcodes'
 import type { Field } from '../schema/fields'
-import type { ImageSource, ImageTriple, Images } from '../schema/images'
-import { defaultValue, translations } from '../schema/localization'
+import type { ImageSource, Images, ImageTriple } from '../schema/images'
 import type { LocalizedString } from '../schema/localization'
+import { defaultValue, translations } from '../schema/localization'
 import type { PassInput } from '../schema/pass'
 import { encodeStringsFile } from './strings'
 

@@ -1,14 +1,14 @@
-export { pemToDer } from './pem'
-export type { PemDecodeOptions } from './pem'
 export {
-  sortSetOfByBytes,
-  encodeLength,
   buildSetOf,
+  encodeLength,
+  sortSetOfByBytes,
   toArrayBuffer,
 } from './der'
-export { SigningMaterial } from './material'
 export type {
-  SigningMaterialFromPemInput,
   SigningMaterialFromParsedInput,
+  SigningMaterialFromPemInput,
 } from './material'
+export { SigningMaterial } from './material'
+export type { PemDecodeOptions } from './pem'
+export { pemToDer } from './pem'
 export { signManifest } from './sign'

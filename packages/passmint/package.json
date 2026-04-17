@@ -12,7 +12,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "LICENSE", "README.md"],
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
@@ -61,7 +65,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "catalog:",
-    "@cloudflare/vitest-pool-workers": "^0.5",
+    "@cloudflare/vitest-pool-workers": "catalog:",
     "@size-limit/preset-small-lib": "^12.1.0",
     "@types/node": "catalog:",
     "publint": "catalog:",
