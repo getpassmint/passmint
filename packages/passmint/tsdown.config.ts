@@ -8,5 +8,8 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   minify: false,
-  external: [/^node:/],
+  fixedExtension: false,
+  deps: {
+    neverBundle: [/^node:/],
+  },
 })

@@ -1,85 +1,80 @@
 export const VERSION: string = '0.0.0'
 
+export type { ManifestResult } from './apple/manifest'
+export { buildManifest } from './apple/manifest'
+// --- Low-level Apple pipeline (for advanced use cases) ---
+export { assemblePkpass } from './apple/pkpass'
+export type { AppleRenderedPass } from './apple/render'
+export { renderApplePass } from './apple/render'
+export { encodeStringsFile, encodeUtf16BeWithBom } from './apple/strings'
+export type {
+  SigningMaterialFromParsedInput,
+  SigningMaterialFromPemInput,
+} from './cms'
+// --- CMS signing (Apple .pkpass) ---
+export { SigningMaterial, signManifest } from './cms'
+export { MAX_PEM_LENGTH } from './cms/pem'
+export type {
+  GoogleErrorCode,
+  PackagingErrorCode,
+  RenderErrorCode,
+  SchemaErrorCode,
+  SigningErrorCode,
+} from './errors'
 // --- Errors ---
 export {
   PassmintError,
-  PassmintSchemaError,
-  PassmintRenderError,
-  PassmintSigningError,
-  PassmintPackagingError,
   PassmintGoogleError,
+  PassmintPackagingError,
+  PassmintRenderError,
+  PassmintSchemaError,
+  PassmintSigningError,
 } from './errors'
 export type {
-  SchemaErrorCode,
-  RenderErrorCode,
-  SigningErrorCode,
-  PackagingErrorCode,
-  GoogleErrorCode,
-} from './errors'
-
-// --- The main facade ---
-export { Pass, PassBuilder, SignedPass, DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS } from './pass'
-export type { GoogleSaveOptions } from './pass'
-
-// --- Google Wallet (JWT save-link) ---
-export {
-  GoogleSigningMaterial,
-  signSaveJwt,
-  renderGooglePayload,
-  buildSaveLink,
-  base64url,
-  base64urlJson,
-} from './google'
-export type {
-  GoogleSigningMaterialFromServiceAccountInput,
-  GoogleSigningMaterialFromParsedInput,
+  GoogleRenderOptions,
   GoogleSaveJwtClaims,
   GoogleSavePayload,
-  GoogleRenderOptions,
+  GoogleSigningMaterialFromParsedInput,
+  GoogleSigningMaterialFromServiceAccountInput,
 } from './google'
-
-// --- CMS signing (Apple .pkpass) ---
-export { SigningMaterial, signManifest } from './cms'
-export type {
-  SigningMaterialFromPemInput,
-  SigningMaterialFromParsedInput,
-} from './cms'
-export { MAX_PEM_LENGTH } from './cms/pem'
-
-// --- Low-level Apple pipeline (for advanced use cases) ---
-export { assemblePkpass } from './apple/pkpass'
-export { renderApplePass } from './apple/render'
-export type { AppleRenderedPass } from './apple/render'
-export { buildManifest } from './apple/manifest'
-export type { ManifestResult } from './apple/manifest'
-export { encodeStringsFile, encodeUtf16BeWithBom } from './apple/strings'
-export { ZipAssembler } from './zip/assembler'
-
-// --- Schema + validation ---
-export { parsePassInput, PassInputSchema } from './schema/index'
+// --- Google Wallet (JWT save-link) ---
+export {
+  base64url,
+  base64urlJson,
+  buildSaveLink,
+  GoogleSigningMaterial,
+  renderGooglePayload,
+  signSaveJwt,
+} from './google'
+export type { GoogleSaveOptions } from './pass'
+// --- The main facade ---
+export { DEFAULT_GOOGLE_JWT_EXPIRY_SECONDS, Pass, PassBuilder, SignedPass } from './pass'
 export { MAX_IMAGE_BYTE_LENGTH } from './schema/images'
 export type {
-  PassInput,
-  PassStyle,
-  BoardingPassInput,
-  EventTicketInput,
-  StoreCardInput,
-  CouponInput,
-  GenericPassInput,
-  LocalizedString,
-  Color,
-  ImageSource,
-  ImageTriple,
-  Images,
   Barcode,
   BarcodeFormat,
+  Beacon,
+  BoardingPassInput,
+  Color,
+  CouponInput,
+  DataDetector,
+  DateTimeStyle,
+  EventTicketInput,
   Field,
   FieldValue,
-  TextAlignment,
-  DateTimeStyle,
-  NumberStyle,
-  DataDetector,
+  GenericPassInput,
+  ImageSource,
+  Images,
+  ImageTriple,
+  LocalizedString,
   Location,
-  Beacon,
+  NumberStyle,
+  PassInput,
+  PassStyle,
   SemanticTags,
+  StoreCardInput,
+  TextAlignment,
 } from './schema/index'
+// --- Schema + validation ---
+export { PassInputSchema, parsePassInput } from './schema/index'
+export { ZipAssembler } from './zip/assembler'

@@ -2,8 +2,8 @@ import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import {
   ImageSourceSchema,
-  ImageTripleSchema,
   ImagesSchema,
+  ImageTripleSchema,
   MAX_IMAGE_BYTE_LENGTH,
 } from '../../src/schema/images'
 

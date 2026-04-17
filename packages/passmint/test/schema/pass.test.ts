@@ -92,17 +92,20 @@ describe('parsePassInput — boarding pass', () => {
     ).toThrow(PassmintSchemaError)
   })
 
-  it.each([['air'], ['train'], ['bus'], ['boat'], ['generic']])(
-    'accepts transitType %s',
-    (transitType) => {
-      const pass = parsePassInput({
-        style: 'boardingPass',
-        ...validBase,
-        transitType,
-      })
-      expect(pass.style).toBe('boardingPass')
-    },
-  )
+  it.each([
+    ['air'],
+    ['train'],
+    ['bus'],
+    ['boat'],
+    ['generic'],
+  ])('accepts transitType %s', (transitType) => {
+    const pass = parsePassInput({
+      style: 'boardingPass',
+      ...validBase,
+      transitType,
+    })
+    expect(pass.style).toBe('boardingPass')
+  })
 
   it('rejects an invalid transitType', () => {
     expect(() =>

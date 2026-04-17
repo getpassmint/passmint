@@ -18,9 +18,14 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.27.11",
-    "turbo": "^2.3.3",
-    "typescript": "^5.7.3"
+    "@biomejs/biome": "^2.4.12",
+    "@changesets/cli": "^2.30.0",
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "^7.1.0"
+    }
   }
 }
