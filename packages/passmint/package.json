@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "catalog:",
-    "@cloudflare/vitest-pool-workers": "^0.5",
+    "@cloudflare/vitest-pool-workers": "^0.14",
     "@size-limit/preset-small-lib": "^12.1.0",
     "@types/node": "catalog:",
     "publint": "catalog:",
