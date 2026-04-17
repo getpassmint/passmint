@@ -46,7 +46,7 @@
       },
       "suspicious": {
         "noExplicitAny": "error",
-        "noConsole": { "level": "error", "options": { "allow": ["log"] } }
+        "noConsole": "error"
       },
       "nursery": {}
     }
@@ -72,7 +72,7 @@
         "rules": {
           "nursery": {},
           "suspicious": {
-            "noConsole": { "level": "off", "options": { "allow": ["log"] } }
+            "noConsole": "off"
           },
           "style": {
             "noNonNullAssertion": "off",
