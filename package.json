@@ -19,9 +19,9 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
-    "@changesets/cli": "^2.30.0",
-    "turbo": "^2.9.6",
+    "@biomejs/biome": "^2.4.14",
+    "@changesets/cli": "^2.31.0",
+    "turbo": "^2.9.8",
     "typescript": "^6.0.3"
   },
   "pnpm": {
