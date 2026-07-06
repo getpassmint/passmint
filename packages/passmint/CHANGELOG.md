@@ -1,5 +1,11 @@
 # passmint
 
+## 0.2.1
+
+### Patch Changes
+
+- 4b5e708: Update `@peculiar/asn1-schema`, `@peculiar/asn1-cms`, `@peculiar/asn1-x509`, and `@peculiar/asn1-rsa` runtime dependencies to ^2.7.0.
+
 ## 0.2.0
 
 ### Minor Changes
