@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 import { BarcodeSchema } from './barcodes'
 import { ColorSchema } from './colors'
+import { FeaturedActionSchema } from './featured-actions'
 import { FieldSchema } from './fields'
 import { ImagesSchema } from './images'
 import { LocalizedStringSchema } from './localization'
@@ -169,6 +170,9 @@ const PassBaseSchema = v.object({
 
   // --- barcodes ---
   barcodes: v.optional(v.pipe(v.array(BarcodeSchema), v.minLength(1))),
+
+  // --- featured actions (Apple only, iOS 27+) ---
+  featuredActions: v.optional(v.pipe(v.array(FeaturedActionSchema), v.maxLength(2))),
 
   // --- localization ---
   localizations: v.optional(v.record(v.string(), LocalizationSchema)),

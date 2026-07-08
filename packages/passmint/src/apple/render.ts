@@ -345,6 +345,8 @@ export function renderApplePass(input: PassInput): AppleRenderedPass {
     passJson.barcodes = input.barcodes.map((b) => renderBarcode(b, collector))
   }
 
+  if (input.featuredActions) passJson.featuredActions = input.featuredActions
+
   passJson[input.style] = buildStyleContent(input, collector)
 
   // Merge top-level localizations if the user provided any explicitly.

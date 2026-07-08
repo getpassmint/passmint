@@ -4,6 +4,7 @@ import { type PassInput, PassInputSchema } from './pass'
 
 export type { Barcode, BarcodeFormat } from './barcodes'
 export type { Color } from './colors'
+export type { FeaturedAction } from './featured-actions'
 export type {
   DataDetector,
   DateTimeStyle,

@@ -60,6 +60,7 @@ export type {
   DataDetector,
   DateTimeStyle,
   EventTicketInput,
+  FeaturedAction,
   Field,
   FieldValue,
   GenericPassInput,

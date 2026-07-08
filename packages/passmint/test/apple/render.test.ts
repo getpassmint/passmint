@@ -306,3 +306,63 @@ describe('renderApplePass — web service + locations', () => {
     expect(result.passJson.maxDistance).toBe(500)
   })
 })
+
+describe('renderApplePass — featured actions', () => {
+  it('emits featuredActions as a top-level array', () => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'storeCard',
+      featuredActions: [
+        { identifier: 'benefits', type: 'membershipBenefits', url: 'https://example.com/b' },
+      ],
+    })
+    const actions = result.passJson.featuredActions as Array<Record<string, unknown>>
+    expect(actions).toHaveLength(1)
+    expect(actions[0]).toEqual({
+      identifier: 'benefits',
+      type: 'membershipBenefits',
+      url: 'https://example.com/b',
+    })
+  })
+
+  it('omits featuredActions when none are provided', () => {
+    const result = renderApplePass({ ...baseInput, style: 'storeCard' })
+    expect(result.passJson.featuredActions).toBeUndefined()
+  })
+})
+
+describe('PassBuilder — featuredAction', () => {
+  it('accumulates featured actions onto the draft', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.storeCard({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-1',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Loyalty card',
+      images: { icon: { x2: { bytes: ICON } } },
+    })
+      .featuredAction({ identifier: 'a', type: 'membershipBenefits', url: 'https://example.com/a' })
+      .build()
+    expect(pass.toObject().featuredActions).toHaveLength(1)
+  })
+
+  it('rejects a third featured action at build time', async () => {
+    const { Pass } = await import('../../src/pass')
+    const { PassmintSchemaError } = await import('../../src/errors')
+    const build = () =>
+      Pass.storeCard({
+        passTypeIdentifier: 'pass.com.example.card',
+        serialNumber: 'card-2',
+        teamIdentifier: 'ABCD1234EF',
+        organizationName: 'Example',
+        description: 'Loyalty card',
+        images: { icon: { x2: { bytes: ICON } } },
+      })
+        .featuredAction({ identifier: 'a', type: 't', url: 'https://example.com/a' })
+        .featuredAction({ identifier: 'b', type: 't', url: 'https://example.com/b' })
+        .featuredAction({ identifier: 'c', type: 't', url: 'https://example.com/c' })
+        .build()
+    expect(build).toThrow(PassmintSchemaError)
+  })
+})
