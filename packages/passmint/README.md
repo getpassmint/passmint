@@ -31,6 +31,7 @@ await pass.toGoogleSaveLink(google, { origins: [...] }) // pay.google.com URL
 - [Google Wallet](#google-wallet)
 - [One schema, two wallets](#one-schema-two-wallets)
 - [Pass styles](#pass-styles)
+- [iOS 27 Wallet support](#ios-27-wallet-support)
 - [Runtimes](#runtimes)
 - [Private keys](#private-keys)
 - [Output formats](#output-formats)
@@ -179,6 +180,74 @@ const google = await pass.toGoogleSaveLink(googleMaterial, {
 | `generic`                             | generic        | `genericClass` + `genericObject`        |
 
 Per-style field-count limits are enforced at construction time, not at render.
+
+## iOS 27 Wallet support
+
+### Poster Generic passes (iOS 27+)
+
+Set `poster: true` on a `generic` pass to use the iOS 27 full-bleed
+`posterGeneric` layout. passmint automatically emits a `generic` fallback
+block too, so passes still install and render on iOS 26 and earlier. A
+`background` image is required — it's the full-bleed artwork.
+
+```ts
+const signed = await Pass.generic({
+  passTypeIdentifier: 'pass.com.example.card',
+  serialNumber: crypto.randomUUID(),
+  teamIdentifier: 'ABCD1234EF',
+  organizationName: 'Example',
+  description: 'Membership card',
+  poster: true,
+  images: {
+    icon: { x2: { bytes: iconPng } },
+    logo: { x2: { bytes: logoPng } },
+    background: { x2: { bytes: artworkPng } }, // full-bleed, required
+  },
+})
+  .headerField({ key: 'id', label: 'Guest No.', value: '102035' })
+  .primaryField({ key: 'tier', value: 'Gold' })
+  .footerField({ key: 'type', value: 'Family Pass' }) // poster-only, max 1
+  .sign(material)
+```
+
+Poster passes show header, primary, and footer fields (plus the background and
+barcode). Any secondary/auxiliary/back fields you add appear only in the
+iOS 26- `generic` fallback. Provide a large background image — poster artwork
+is displayed full-bleed, not as the small blurred legacy background.
+
+### Featured Actions
+
+`featuredActions` adds up to two tappable buttons below the pass face, via
+`.featuredAction({ identifier, type, url })` on the builder or the
+`featuredActions` array on the raw input. This is Apple-only — Google Wallet
+has no equivalent and ignores it, and iOS 26 and earlier ignore the unknown
+key. `type` is an open string, not a closed enum, since Apple hasn't
+published the full set; known values are `membershipBenefits` and
+`viewMembership`.
+
+```ts
+Pass.generic({ /* ... */ }).featuredAction({
+  identifier: 'benefits',
+  type: 'membershipBenefits',
+  url: 'https://example.com/benefits',
+})
+```
+
+### Barcodes
+
+Beyond `qr`, `pdf417`, `aztec`, and `code128`, passmint supports four more
+formats added for iOS 27: `ean13`, `code39`, `codabar`, and `itf`. iOS 26 and
+earlier won't render these — include a `qr` (or other pre-iOS-27 format) entry
+in the same `barcodes` array as a fallback. Wallet renders the first format it
+supports, and passmint preserves array order rather than reordering or
+stripping entries. On Google Wallet these map to `EAN_13`, `CODE_39`,
+`CODABAR`, and `ITF_14` respectively (note `itf` → `ITF_14`, not `ITF`).
+
+### Deferred
+
+Poster Event Tickets (`posterEventTicket` / `preferredStyleSchemes`) are not
+natively modeled because they require an Apple NFC entitlement; entitled
+issuers can reach them via `applyRaw.apple`.
 
 ## Runtimes
 
