@@ -4,7 +4,7 @@ import type { Field } from '../schema/fields'
 import type { ImageSource, Images, ImageTriple } from '../schema/images'
 import type { LocalizedString } from '../schema/localization'
 import { defaultValue, translations } from '../schema/localization'
-import type { PassInput } from '../schema/pass'
+import type { GenericPassInput, PassInput } from '../schema/pass'
 import { encodeStringsFile } from './strings'
 
 /**
@@ -289,6 +289,27 @@ function buildStyleContent(
   return content
 }
 
+/**
+ * Build the `posterGeneric` block for an iOS 27 poster generic pass. The
+ * poster face shows header fields, primary fields, and a single footer field
+ * (plus the background image and barcode, handled elsewhere). It does NOT
+ * show secondary/auxiliary/back fields — those live only in the `generic`
+ * fallback block.
+ */
+function buildPosterGenericContent(
+  input: GenericPassInput,
+  collector: TranslationCollector,
+): Record<string, unknown> {
+  const content: Record<string, unknown> = {}
+  if (input.headerFields)
+    content.headerFields = input.headerFields.map((f) => renderField(f, collector))
+  if (input.primaryFields)
+    content.primaryFields = input.primaryFields.map((f) => renderField(f, collector))
+  if (input.footerFields)
+    content.footerFields = input.footerFields.map((f) => renderField(f, collector))
+  return content
+}
+
 // --- main entry point ---
 
 /**
@@ -347,7 +368,13 @@ export function renderApplePass(input: PassInput): AppleRenderedPass {
 
   if (input.featuredActions) passJson.featuredActions = input.featuredActions
 
-  passJson[input.style] = buildStyleContent(input, collector)
+  if (input.style === 'generic' && input.poster) {
+    // Emit both blocks: posterGeneric for iOS 27+, generic as the iOS 26- fallback.
+    passJson.generic = buildStyleContent(input, collector)
+    passJson.posterGeneric = buildPosterGenericContent(input, collector)
+  } else {
+    passJson[input.style] = buildStyleContent(input, collector)
+  }
 
   // Merge top-level localizations if the user provided any explicitly.
   if (input.localizations) {

@@ -298,6 +298,13 @@ export class PassBuilder<TInput extends PassInput> {
     return this
   }
 
+  /** Add the poster-only footer field (generic poster passes; max 1). */
+  footerField(field: Field): this {
+    const current = (this.draft as unknown as { footerFields?: Field[] }).footerFields ?? []
+    ;(this.draft as unknown as { footerFields?: Field[] }).footerFields = [...current, field]
+    return this
+  }
+
   // --- supplementary ---
 
   barcode(barcode: Barcode): this {

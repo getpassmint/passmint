@@ -366,3 +366,90 @@ describe('PassBuilder — featuredAction', () => {
     expect(build).toThrow(PassmintSchemaError)
   })
 })
+
+describe('renderApplePass — poster generic', () => {
+  const posterInput = {
+    ...baseInput,
+    style: 'generic' as const,
+    poster: true,
+    images: {
+      icon: { x2: { bytes: ICON } },
+      background: { x2: { bytes: ICON } },
+    },
+    headerFields: [{ key: 'id', label: 'Guest No.', value: '102035' }],
+    primaryFields: [{ key: 'tier', value: 'Gold' }],
+    secondaryFields: [{ key: 'since', value: '2019' }],
+    footerFields: [{ key: 'type', value: 'Family Pass' }],
+  }
+
+  it('emits both posterGeneric and generic blocks', () => {
+    const result = renderApplePass(posterInput)
+    expect(result.passJson.posterGeneric).toBeDefined()
+    expect(result.passJson.generic).toBeDefined()
+  })
+
+  it('routes footerFields to posterGeneric only', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(poster.footerFields).toHaveLength(1)
+    expect(generic.footerFields).toBeUndefined()
+  })
+
+  it('routes secondaryFields to the generic fallback only', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(generic.secondaryFields).toHaveLength(1)
+    expect(poster.secondaryFields).toBeUndefined()
+  })
+
+  it('emits header and primary fields in both blocks', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(poster.headerFields).toHaveLength(1)
+    expect(poster.primaryFields).toHaveLength(1)
+    expect(generic.headerFields).toHaveLength(1)
+    expect(generic.primaryFields).toHaveLength(1)
+  })
+
+  it('includes background.png in the file map', () => {
+    const result = renderApplePass(posterInput)
+    expect(result.files['background@2x.png']).toBeDefined()
+  })
+
+  it('a non-poster generic pass emits only the generic key', () => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'generic',
+      primaryFields: [{ key: 'tier', value: 'Gold' }],
+    })
+    expect(result.passJson.generic).toBeDefined()
+    expect(result.passJson.posterGeneric).toBeUndefined()
+  })
+})
+
+describe('PassBuilder — footerField', () => {
+  it('accumulates a footer field emitted in the posterGeneric block', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-3',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Membership card',
+      poster: true,
+      images: {
+        icon: { x2: { bytes: ICON } },
+        background: { x2: { bytes: ICON } },
+      },
+    })
+      .primaryField({ key: 'tier', value: 'Gold' })
+      .footerField({ key: 'type', value: 'Family Pass' })
+      .build()
+    const rendered = renderApplePass(pass.toObject())
+    const poster = rendered.passJson.posterGeneric as Record<string, unknown>
+    expect(poster.footerFields).toHaveLength(1)
+  })
+})
