@@ -229,6 +229,21 @@ describe('end-to-end .pkpass assembly', () => {
     for (const [name, hash] of Object.entries(manifest)) {
       expect(sha1Hex(files[name] as Uint8Array)).toBe(hash)
     }
+
+    // --- Signature verification via openssl ---
+    expect(files.signature).toBeDefined()
+    const manifestPath = writeFixtureFile(
+      'e2e-poster-manifest.bin',
+      files['manifest.json'] as Uint8Array,
+    )
+    const signaturePath = writeFixtureFile(
+      'e2e-poster-signature.bin',
+      files.signature as Uint8Array,
+    )
+    execSync(
+      `openssl cms -verify -in "${signaturePath}" -inform DER -content "${manifestPath}" -noverify -binary -out /dev/null`,
+      { stdio: 'pipe' },
+    )
   })
 
   it('SignedPass.toStream yields the full body in one chunk', async () => {

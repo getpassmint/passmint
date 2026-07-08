@@ -183,6 +183,12 @@ Per-style field-count limits are enforced at construction time, not at render.
 
 ## iOS 27 Wallet support
 
+> **Beta caveat:** the exact identifiers this release emits for iOS 27 — the
+> new `PKBarcodeFormat*` barcode constants and the `posterGeneric` /
+> `featuredActions` JSON key and field names — were authored against Apple's
+> iOS 27 beta documentation, ahead of a GA release. Confirm them against a
+> real iOS 27 build before relying on them in production.
+
 ### Poster Generic passes (iOS 27+)
 
 Set `poster: true` on a `generic` pass to use the iOS 27 full-bleed

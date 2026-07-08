@@ -347,6 +347,22 @@ describe('PassBuilder — featuredAction', () => {
     expect(pass.toObject().featuredActions).toHaveLength(1)
   })
 
+  it('accepts exactly two featured actions at build time', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.storeCard({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-1b',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Loyalty card',
+      images: { icon: { x2: { bytes: ICON } } },
+    })
+      .featuredAction({ identifier: 'a', type: 't', url: 'https://example.com/a' })
+      .featuredAction({ identifier: 'b', type: 't', url: 'https://example.com/b' })
+      .build()
+    expect(pass.toObject().featuredActions).toHaveLength(2)
+  })
+
   it('rejects a third featured action at build time', async () => {
     const { Pass } = await import('../../src/pass')
     const { PassmintSchemaError } = await import('../../src/errors')

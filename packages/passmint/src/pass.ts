@@ -298,7 +298,11 @@ export class PassBuilder<TInput extends PassInput> {
     return this
   }
 
-  /** Add the poster-only footer field (generic poster passes; max 1). */
+  /**
+   * Add the poster-only footer field (generic poster passes; max 1).
+   * Only takes effect on a generic pass built with `poster: true`; on other
+   * styles or non-poster generic passes it is ignored or rejected at build.
+   */
   footerField(field: Field): this {
     const current = (this.draft as unknown as { footerFields?: Field[] }).footerFields ?? []
     ;(this.draft as unknown as { footerFields?: Field[] }).footerFields = [...current, field]

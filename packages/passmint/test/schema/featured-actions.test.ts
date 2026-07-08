@@ -29,4 +29,13 @@ describe('FeaturedActionSchema', () => {
     })
     expect(r.success).toBe(false)
   })
+
+  it('rejects an empty type', () => {
+    const r = v.safeParse(FeaturedActionSchema, {
+      identifier: 'x',
+      type: '',
+      url: 'https://example.com',
+    })
+    expect(r.success).toBe(false)
+  })
 })
