@@ -1,5 +1,11 @@
 # passmint
 
+## 0.3.0
+
+### Minor Changes
+
+- 29feaf1: Add iOS 27 Wallet support: Poster Generic passes (`poster: true` on `generic`, with an automatic `generic` fallback for iOS 26 and earlier), Featured Actions (`featuredActions` / `.featuredAction()`), and four new barcode formats (EAN-13, Code 39, Codabar, ITF) across both the Apple and Google renderers.
+
 ## 0.2.1
 
 ### Patch Changes
