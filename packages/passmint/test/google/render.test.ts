@@ -313,6 +313,26 @@ describe('renderGooglePayload — shared mapping', () => {
     expect(obj.textModulesData).toHaveLength(4)
   })
 
+  it('includes header fields in textModulesData, ordered first', () => {
+    const payload = renderGooglePayload(
+      {
+        ...base,
+        style: 'generic',
+        headerFields: [{ key: 'h', label: 'Header', value: '9/10' }],
+        primaryFields: [{ key: 'p', label: 'P', value: '1' }],
+      },
+      { issuerId },
+    )
+    const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<string, unknown>
+    const textModules = obj.textModulesData as Record<string, unknown>[]
+    // Google has no header slot, so header fields flatten into text modules
+    // like every other group — and read first, as the most prominent status.
+    expect(textModules).toHaveLength(2)
+    expect(textModules[0]!.id).toBe('h')
+    expect(textModules[0]!.body).toBe('9/10')
+    expect(textModules[1]!.id).toBe('p')
+  })
+
   it('passes through locations', () => {
     const payload = renderGooglePayload(
       {

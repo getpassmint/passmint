@@ -148,6 +148,7 @@ function renderLocations(
 function fieldsToTextModules(input: PassInput): Record<string, unknown>[] | undefined {
   const collected: Field[] = []
   for (const group of [
+    input.headerFields,
     input.primaryFields,
     input.secondaryFields,
     input.auxiliaryFields,
