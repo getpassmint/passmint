@@ -87,6 +87,10 @@ const BARCODE_FORMAT: Record<string, string> = {
   pdf417: 'PKBarcodeFormatPDF417',
   aztec: 'PKBarcodeFormatAztec',
   code128: 'PKBarcodeFormatCode128',
+  ean13: 'PKBarcodeFormatEAN13',
+  code39: 'PKBarcodeFormatCode39',
+  codabar: 'PKBarcodeFormatCodabar',
+  itf: 'PKBarcodeFormatITF',
 }
 
 const TRANSIT_TYPE: Record<string, string> = {

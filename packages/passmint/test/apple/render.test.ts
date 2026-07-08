@@ -265,6 +265,23 @@ describe('renderApplePass — semantics and applyRaw', () => {
   })
 })
 
+describe('renderApplePass — new iOS 27 barcode formats', () => {
+  it.each([
+    ['ean13', 'PKBarcodeFormatEAN13'],
+    ['code39', 'PKBarcodeFormatCode39'],
+    ['codabar', 'PKBarcodeFormatCodabar'],
+    ['itf', 'PKBarcodeFormatITF'],
+  ])('maps %s to %s', (format, pkFormat) => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'storeCard',
+      barcodes: [{ format: format as 'ean13', message: '1234567890' }],
+    })
+    const barcodes = result.passJson.barcodes as Array<Record<string, unknown>>
+    expect(barcodes[0]?.format).toBe(pkFormat)
+  })
+})
+
 describe('renderApplePass — web service + locations', () => {
   it('maps webService to webServiceURL/authenticationToken', () => {
     const result = renderApplePass({

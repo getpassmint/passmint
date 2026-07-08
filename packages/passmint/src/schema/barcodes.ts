@@ -3,19 +3,35 @@ import { LocalizedStringSchema } from './localization'
 
 /**
  * Unified barcode format enum. Friendly names; render layers translate to
- * Apple's `PKBarcodeFormatQR` and Google's `QR_CODE` families.
+ * Apple's `PKBarcodeFormat*` and Google's `QR_CODE` families.
  *
- * Formats supported by both Apple and Google:
+ * Supported by both Apple and Google:
  *   - qr       → PKBarcodeFormatQR / QR_CODE
  *   - pdf417   → PKBarcodeFormatPDF417 / PDF_417
  *   - aztec    → PKBarcodeFormatAztec / AZTEC
  *   - code128  → PKBarcodeFormatCode128 / CODE_128 (not on watchOS)
  *
- * Google-only additions (mapped via `applyRaw.google` escape hatch if needed):
- * EAN_13, EAN_8, UPC_A, DATA_MATRIX, ITF_14, CODABAR. Not in the unified
- * format because Apple has no analog.
+ * Added for iOS 27 (Apple) — long-standing on Google:
+ *   - ean13    → PKBarcodeFormatEAN13  / EAN_13
+ *   - code39   → PKBarcodeFormatCode39 / CODE_39
+ *   - codabar  → PKBarcodeFormatCodabar / CODABAR
+ *   - itf      → PKBarcodeFormatITF    / ITF_14
+ *
+ * iOS 27+ only renders ean13/code39/codabar/itf. For iOS 26 and earlier,
+ * include a `qr` (or other pre-iOS-27) barcode entry in the same `barcodes`
+ * array — Wallet renders the first format it supports, and passmint never
+ * reorders or strips entries.
  */
-export const BarcodeFormatSchema = v.picklist(['qr', 'pdf417', 'aztec', 'code128'])
+export const BarcodeFormatSchema = v.picklist([
+  'qr',
+  'pdf417',
+  'aztec',
+  'code128',
+  'ean13',
+  'code39',
+  'codabar',
+  'itf',
+])
 
 export type BarcodeFormat = v.InferOutput<typeof BarcodeFormatSchema>
 
