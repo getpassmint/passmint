@@ -1,5 +1,6 @@
+import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
-import { PassmintSchemaError, parsePassInput } from '../../src/index'
+import { PassInputSchema, PassmintSchemaError, parsePassInput } from '../../src/index'
 
 const FAKE_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
 
@@ -367,5 +368,66 @@ describe('parsePassInput — applyRaw escape hatch', () => {
         applyRaw: { google: { rotatingBarcode: { type: 'QR_CODE' } } },
       }),
     ).not.toThrow()
+  })
+})
+
+describe('GenericPassSchema — poster', () => {
+  const base = {
+    style: 'generic' as const,
+    passTypeIdentifier: 'pass.com.example.card',
+    serialNumber: 'card-1',
+    teamIdentifier: 'ABCD1234EF',
+    organizationName: 'Example',
+    description: 'Membership card',
+    images: {
+      icon: { x2: { bytes: new Uint8Array([1]) } },
+      background: { x2: { bytes: new Uint8Array([2]) } },
+    },
+  }
+
+  it('accepts poster: true when a background image is present', () => {
+    const r = v.safeParse(PassInputSchema, { ...base, poster: true })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects poster: true without a background image', () => {
+    const { background, ...noBg } = base.images
+    const r = v.safeParse(PassInputSchema, { ...base, images: noBg, poster: true })
+    expect(r.success).toBe(false)
+  })
+
+  it('accepts a single footerField with poster: true', () => {
+    const r = v.safeParse(PassInputSchema, {
+      ...base,
+      poster: true,
+      footerFields: [{ key: 'tier', value: 'Family Pass' }],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects footerFields without poster: true', () => {
+    const r = v.safeParse(PassInputSchema, {
+      ...base,
+      footerFields: [{ key: 'tier', value: 'Family Pass' }],
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('rejects more than one footerField', () => {
+    const r = v.safeParse(PassInputSchema, {
+      ...base,
+      poster: true,
+      footerFields: [
+        { key: 'a', value: '1' },
+        { key: 'b', value: '2' },
+      ],
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('accepts a normal (non-poster) generic pass with no background', () => {
+    const { background, ...noBg } = base.images
+    const r = v.safeParse(PassInputSchema, { ...base, images: noBg })
+    expect(r.success).toBe(true)
   })
 })

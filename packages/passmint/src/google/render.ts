@@ -36,6 +36,10 @@ const GOOGLE_BARCODE_FORMAT: Record<string, string> = {
   pdf417: 'PDF_417',
   aztec: 'AZTEC',
   code128: 'CODE_128',
+  ean13: 'EAN_13',
+  code39: 'CODE_39',
+  codabar: 'CODABAR',
+  itf: 'ITF_14',
 }
 
 const HEX_LONG = /^#[0-9a-f]{6}$/i

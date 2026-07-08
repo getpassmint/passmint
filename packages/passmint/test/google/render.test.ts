@@ -451,3 +451,24 @@ describe('renderGooglePayload — shared mapping', () => {
     })
   })
 })
+
+describe('renderGooglePayload — new iOS 27 barcode formats', () => {
+  it.each([
+    ['ean13', 'EAN_13'],
+    ['code39', 'CODE_39'],
+    ['codabar', 'CODABAR'],
+    ['itf', 'ITF_14'],
+  ])('maps %s to Google %s', (format, googleType) => {
+    const payload = renderGooglePayload(
+      {
+        ...base,
+        style: 'generic',
+        barcodes: [{ format: format as 'ean13', message: '1234567890' }],
+      },
+      { issuerId },
+    )
+    const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<string, unknown>
+    const barcode = obj.barcode as Record<string, unknown>
+    expect(barcode.type).toBe(googleType)
+  })
+})

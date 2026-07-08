@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 import { BarcodeSchema } from './barcodes'
 import { ColorSchema } from './colors'
+import { FeaturedActionSchema } from './featured-actions'
 import { FieldSchema } from './fields'
 import { ImagesSchema } from './images'
 import { LocalizedStringSchema } from './localization'
@@ -170,6 +171,9 @@ const PassBaseSchema = v.object({
   // --- barcodes ---
   barcodes: v.optional(v.pipe(v.array(BarcodeSchema), v.minLength(1))),
 
+  // --- featured actions (Apple only, iOS 27+) ---
+  featuredActions: v.optional(v.pipe(v.array(FeaturedActionSchema), v.maxLength(2))),
+
   // --- localization ---
   localizations: v.optional(v.record(v.string(), LocalizationSchema)),
 
@@ -239,11 +243,34 @@ export const CouponSchema = v.object({
 })
 export type CouponInput = v.InferOutput<typeof CouponSchema>
 
-export const GenericPassSchema = v.object({
-  ...PassBaseSchema.entries,
-  style: v.literal('generic'),
-  ...StandardFieldLayout,
-})
+export const GenericPassSchema = v.pipe(
+  v.object({
+    ...PassBaseSchema.entries,
+    style: v.literal('generic'),
+    ...StandardFieldLayout,
+    /**
+     * Enable the iOS 27 `posterGeneric` full-bleed layout. When true, the
+     * Apple renderer emits BOTH a `posterGeneric` block and a `generic`
+     * fallback block so iOS 26 and earlier still install and render the pass.
+     * Requires `images.background`.
+     */
+    poster: v.optional(v.boolean()),
+    /**
+     * Poster-only single text footer field. Ignored unless `poster` is true
+     * (standard generic passes have no text footer). Wallet shows only the
+     * first, so at most one is allowed.
+     */
+    footerFields: v.optional(v.pipe(v.array(FieldSchema), v.maxLength(1))),
+  }),
+  v.check(
+    (input) => !input.poster || input.images.background !== undefined,
+    'A poster generic pass (poster: true) requires images.background',
+  ),
+  v.check(
+    (input) => input.poster === true || input.footerFields === undefined,
+    'footerFields requires poster: true (standard generic passes have no text footer)',
+  ),
+)
 export type GenericPassInput = v.InferOutput<typeof GenericPassSchema>
 
 /**

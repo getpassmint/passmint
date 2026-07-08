@@ -6,6 +6,7 @@ import type { GoogleSigningMaterial } from './google/material'
 import { type GoogleRenderOptions, renderGooglePayload } from './google/render'
 import { buildSaveLink } from './google/save-link'
 import type { Barcode } from './schema/barcodes'
+import type { FeaturedAction } from './schema/featured-actions'
 import type { Field } from './schema/fields'
 import { parsePassInput } from './schema/index'
 import type { Beacon, Location } from './schema/locations'
@@ -297,11 +298,33 @@ export class PassBuilder<TInput extends PassInput> {
     return this
   }
 
+  /**
+   * Add the poster-only footer field (generic poster passes; max 1).
+   * Only takes effect on a generic pass built with `poster: true`; on other
+   * styles or non-poster generic passes it is ignored or rejected at build.
+   */
+  footerField(field: Field): this {
+    const current = (this.draft as unknown as { footerFields?: Field[] }).footerFields ?? []
+    ;(this.draft as unknown as { footerFields?: Field[] }).footerFields = [...current, field]
+    return this
+  }
+
   // --- supplementary ---
 
   barcode(barcode: Barcode): this {
     const current = this.draft.barcodes ?? []
     ;(this.draft as unknown as { barcodes?: Barcode[] }).barcodes = [...current, barcode]
+    return this
+  }
+
+  /** Add a featured action (Apple only, iOS 27+). Max 2, enforced at build. */
+  featuredAction(action: FeaturedAction): this {
+    const current =
+      (this.draft as unknown as { featuredActions?: FeaturedAction[] }).featuredActions ?? []
+    ;(this.draft as unknown as { featuredActions?: FeaturedAction[] }).featuredActions = [
+      ...current,
+      action,
+    ]
     return this
   }
 

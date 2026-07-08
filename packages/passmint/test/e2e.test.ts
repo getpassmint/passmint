@@ -182,6 +182,70 @@ describe('end-to-end .pkpass assembly', () => {
     expect(disposition).not.toContain('"; filename="')
   })
 
+  it('builds, signs, and openssl verifies a poster generic pass', async () => {
+    const signed = await Pass.generic({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'e2e-poster-7',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'End-to-end poster generic membership card',
+      poster: true,
+      images: {
+        icon: { x2: { bytes: FAKE_ICON } },
+        logo: { x2: { bytes: FAKE_LOGO } },
+        background: { x2: { bytes: FAKE_STRIP } },
+      },
+      barcodes: [
+        { format: 'codabar', message: '1234567890' },
+        { format: 'qr', message: '1234567890' },
+      ],
+      featuredActions: [
+        { identifier: 'benefits', type: 'membershipBenefits', url: 'https://example.com/b' },
+      ],
+    })
+      .headerField({ key: 'id', label: 'Guest No.', value: '102035' })
+      .primaryField({ key: 'tier', value: 'Gold' })
+      .footerField({ key: 'type', value: 'Family Pass' })
+      .sign(material)
+
+    expect(signed).toBeInstanceOf(SignedPass)
+
+    const bytes = signed.toUint8Array()
+    const files = unzipSync(bytes)
+
+    // pass.json carries BOTH the poster and fallback blocks + featured actions.
+    const passJson = JSON.parse(new TextDecoder().decode(files['pass.json'] as Uint8Array))
+    expect(passJson.posterGeneric).toBeDefined()
+    expect(passJson.generic).toBeDefined()
+    expect(passJson.featuredActions).toHaveLength(1)
+    expect(passJson.barcodes[0].format).toBe('PKBarcodeFormatCodabar')
+    expect(passJson.barcodes[1].format).toBe('PKBarcodeFormatQR')
+
+    // The full-bleed background asset is present.
+    expect(files['background@2x.png']).toBeDefined()
+
+    // Every manifest hash matches its file bytes.
+    const manifest = JSON.parse(new TextDecoder().decode(files['manifest.json'] as Uint8Array))
+    for (const [name, hash] of Object.entries(manifest)) {
+      expect(sha1Hex(files[name] as Uint8Array)).toBe(hash)
+    }
+
+    // --- Signature verification via openssl ---
+    expect(files.signature).toBeDefined()
+    const manifestPath = writeFixtureFile(
+      'e2e-poster-manifest.bin',
+      files['manifest.json'] as Uint8Array,
+    )
+    const signaturePath = writeFixtureFile(
+      'e2e-poster-signature.bin',
+      files.signature as Uint8Array,
+    )
+    execSync(
+      `openssl cms -verify -in "${signaturePath}" -inform DER -content "${manifestPath}" -noverify -binary -out /dev/null`,
+      { stdio: 'pipe' },
+    )
+  })
+
   it('SignedPass.toStream yields the full body in one chunk', async () => {
     const signed = await Pass.generic({
       passTypeIdentifier: 'pass.com.example.generic',

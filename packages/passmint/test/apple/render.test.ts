@@ -265,6 +265,23 @@ describe('renderApplePass — semantics and applyRaw', () => {
   })
 })
 
+describe('renderApplePass — new iOS 27 barcode formats', () => {
+  it.each([
+    ['ean13', 'PKBarcodeFormatEAN13'],
+    ['code39', 'PKBarcodeFormatCode39'],
+    ['codabar', 'PKBarcodeFormatCodabar'],
+    ['itf', 'PKBarcodeFormatITF'],
+  ])('maps %s to %s', (format, pkFormat) => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'storeCard',
+      barcodes: [{ format: format as 'ean13', message: '1234567890' }],
+    })
+    const barcodes = result.passJson.barcodes as Array<Record<string, unknown>>
+    expect(barcodes[0]?.format).toBe(pkFormat)
+  })
+})
+
 describe('renderApplePass — web service + locations', () => {
   it('maps webService to webServiceURL/authenticationToken', () => {
     const result = renderApplePass({
@@ -287,5 +304,168 @@ describe('renderApplePass — web service + locations', () => {
     expect(result.passJson.locations).toHaveLength(1)
     expect(result.passJson.beacons).toHaveLength(1)
     expect(result.passJson.maxDistance).toBe(500)
+  })
+})
+
+describe('renderApplePass — featured actions', () => {
+  it('emits featuredActions as a top-level array', () => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'storeCard',
+      featuredActions: [
+        { identifier: 'benefits', type: 'membershipBenefits', url: 'https://example.com/b' },
+      ],
+    })
+    const actions = result.passJson.featuredActions as Array<Record<string, unknown>>
+    expect(actions).toHaveLength(1)
+    expect(actions[0]).toEqual({
+      identifier: 'benefits',
+      type: 'membershipBenefits',
+      url: 'https://example.com/b',
+    })
+  })
+
+  it('omits featuredActions when none are provided', () => {
+    const result = renderApplePass({ ...baseInput, style: 'storeCard' })
+    expect(result.passJson.featuredActions).toBeUndefined()
+  })
+})
+
+describe('PassBuilder — featuredAction', () => {
+  it('accumulates featured actions onto the draft', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.storeCard({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-1',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Loyalty card',
+      images: { icon: { x2: { bytes: ICON } } },
+    })
+      .featuredAction({ identifier: 'a', type: 'membershipBenefits', url: 'https://example.com/a' })
+      .build()
+    expect(pass.toObject().featuredActions).toHaveLength(1)
+  })
+
+  it('accepts exactly two featured actions at build time', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.storeCard({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-1b',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Loyalty card',
+      images: { icon: { x2: { bytes: ICON } } },
+    })
+      .featuredAction({ identifier: 'a', type: 't', url: 'https://example.com/a' })
+      .featuredAction({ identifier: 'b', type: 't', url: 'https://example.com/b' })
+      .build()
+    expect(pass.toObject().featuredActions).toHaveLength(2)
+  })
+
+  it('rejects a third featured action at build time', async () => {
+    const { Pass } = await import('../../src/pass')
+    const { PassmintSchemaError } = await import('../../src/errors')
+    const build = () =>
+      Pass.storeCard({
+        passTypeIdentifier: 'pass.com.example.card',
+        serialNumber: 'card-2',
+        teamIdentifier: 'ABCD1234EF',
+        organizationName: 'Example',
+        description: 'Loyalty card',
+        images: { icon: { x2: { bytes: ICON } } },
+      })
+        .featuredAction({ identifier: 'a', type: 't', url: 'https://example.com/a' })
+        .featuredAction({ identifier: 'b', type: 't', url: 'https://example.com/b' })
+        .featuredAction({ identifier: 'c', type: 't', url: 'https://example.com/c' })
+        .build()
+    expect(build).toThrow(PassmintSchemaError)
+  })
+})
+
+describe('renderApplePass — poster generic', () => {
+  const posterInput = {
+    ...baseInput,
+    style: 'generic' as const,
+    poster: true,
+    images: {
+      icon: { x2: { bytes: ICON } },
+      background: { x2: { bytes: ICON } },
+    },
+    headerFields: [{ key: 'id', label: 'Guest No.', value: '102035' }],
+    primaryFields: [{ key: 'tier', value: 'Gold' }],
+    secondaryFields: [{ key: 'since', value: '2019' }],
+    footerFields: [{ key: 'type', value: 'Family Pass' }],
+  }
+
+  it('emits both posterGeneric and generic blocks', () => {
+    const result = renderApplePass(posterInput)
+    expect(result.passJson.posterGeneric).toBeDefined()
+    expect(result.passJson.generic).toBeDefined()
+  })
+
+  it('routes footerFields to posterGeneric only', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(poster.footerFields).toHaveLength(1)
+    expect(generic.footerFields).toBeUndefined()
+  })
+
+  it('routes secondaryFields to the generic fallback only', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(generic.secondaryFields).toHaveLength(1)
+    expect(poster.secondaryFields).toBeUndefined()
+  })
+
+  it('emits header and primary fields in both blocks', () => {
+    const result = renderApplePass(posterInput)
+    const poster = result.passJson.posterGeneric as Record<string, unknown>
+    const generic = result.passJson.generic as Record<string, unknown>
+    expect(poster.headerFields).toHaveLength(1)
+    expect(poster.primaryFields).toHaveLength(1)
+    expect(generic.headerFields).toHaveLength(1)
+    expect(generic.primaryFields).toHaveLength(1)
+  })
+
+  it('includes background.png in the file map', () => {
+    const result = renderApplePass(posterInput)
+    expect(result.files['background@2x.png']).toBeDefined()
+  })
+
+  it('a non-poster generic pass emits only the generic key', () => {
+    const result = renderApplePass({
+      ...baseInput,
+      style: 'generic',
+      primaryFields: [{ key: 'tier', value: 'Gold' }],
+    })
+    expect(result.passJson.generic).toBeDefined()
+    expect(result.passJson.posterGeneric).toBeUndefined()
+  })
+})
+
+describe('PassBuilder — footerField', () => {
+  it('accumulates a footer field emitted in the posterGeneric block', async () => {
+    const { Pass } = await import('../../src/pass')
+    const pass = Pass.generic({
+      passTypeIdentifier: 'pass.com.example.card',
+      serialNumber: 'card-3',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'Example',
+      description: 'Membership card',
+      poster: true,
+      images: {
+        icon: { x2: { bytes: ICON } },
+        background: { x2: { bytes: ICON } },
+      },
+    })
+      .primaryField({ key: 'tier', value: 'Gold' })
+      .footerField({ key: 'type', value: 'Family Pass' })
+      .build()
+    const rendered = renderApplePass(pass.toObject())
+    const poster = rendered.passJson.posterGeneric as Record<string, unknown>
+    expect(poster.footerFields).toHaveLength(1)
   })
 })

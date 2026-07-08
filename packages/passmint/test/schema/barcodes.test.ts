@@ -11,7 +11,16 @@ describe('BarcodeSchema', () => {
     expect(r.success).toBe(true)
   })
 
-  it.each([['qr'], ['pdf417'], ['aztec'], ['code128']])('accepts format %s', (format) => {
+  it.each([
+    ['qr'],
+    ['pdf417'],
+    ['aztec'],
+    ['code128'],
+    ['ean13'],
+    ['code39'],
+    ['codabar'],
+    ['itf'],
+  ])('accepts format %s', (format) => {
     const r = v.safeParse(BarcodeSchema, { format, message: 'x' })
     expect(r.success).toBe(true)
   })
@@ -19,8 +28,8 @@ describe('BarcodeSchema', () => {
   it.each([
     ['QR'],
     ['qrcode'],
-    ['ean13'],
     ['upc_a'],
+    ['ean8'],
     [''],
     [null],
   ])('rejects format %s', (format) => {
