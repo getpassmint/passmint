@@ -3,6 +3,7 @@ export const VERSION: string = '0.0.0'
 export type { ManifestResult } from './apple/manifest'
 export { buildManifest } from './apple/manifest'
 // --- Low-level Apple pipeline (for advanced use cases) ---
+export type { ManifestSigner } from './apple/pkpass'
 export { assemblePkpass } from './apple/pkpass'
 export type { AppleRenderedPass } from './apple/render'
 export { renderApplePass } from './apple/render'
