@@ -1,6 +1,6 @@
 {
   "name": "passmint",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Edge-native Apple Wallet + Google Wallet pass generation. Web Crypto only.",
   "type": "module",
   "engines": {
