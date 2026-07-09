@@ -1,4 +1,4 @@
-import { assemblePkpass } from './apple/pkpass'
+import { assemblePkpass, type ManifestSigner } from './apple/pkpass'
 import type { SigningMaterial } from './cms'
 import { PassmintGoogleError } from './errors'
 import { type GoogleSaveJwtClaims, signSaveJwt } from './google/jwt'
@@ -178,9 +178,21 @@ export class Pass {
    * Sign and assemble the pass into a `.pkpass` file. Use with a
    * {@link SigningMaterial} instance you've built once and cached for
    * reuse across requests.
+   *
+   * Alternatively pass a {@link ManifestSigner} — a callback that receives the
+   * raw `manifest.json` bytes and returns the DER-encoded CMS signature. Use it
+   * when the private key must not exist in this process: the callback can hand
+   * the manifest to a KMS, an HSM, or a separate signing service, and nothing
+   * but `manifest.json` (a map of filenames to SHA-1 digests) ever leaves.
+   *
+   * @example
+   * ```ts
+   * await pass.sign(material)                               // key is here
+   * await pass.sign((manifest) => signer.sign(manifest))    // key is elsewhere
+   * ```
    */
-  async sign(material: SigningMaterial): Promise<SignedPass> {
-    const bytes = await assemblePkpass(this.input, material)
+  async sign(signing: SigningMaterial | ManifestSigner): Promise<SignedPass> {
+    const bytes = await assemblePkpass(this.input, signing)
     return new SignedPass(bytes, this.input.serialNumber)
   }
 
@@ -376,9 +388,9 @@ export class PassBuilder<TInput extends PassInput> {
     return Pass.from(this.draft)
   }
 
-  /** Shortcut: `.build().sign(material)`. */
-  async sign(material: SigningMaterial): Promise<SignedPass> {
-    return this.build().sign(material)
+  /** Shortcut: `.build().sign(signing)`. Accepts material or a {@link ManifestSigner}. */
+  async sign(signing: SigningMaterial | ManifestSigner): Promise<SignedPass> {
+    return this.build().sign(signing)
   }
 
   /** Return the raw (unvalidated) draft. */
