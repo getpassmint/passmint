@@ -1,5 +1,11 @@
 # passmint
 
+## 0.5.1
+
+### Patch Changes
+
+- b178e5d: Update runtime dependencies: valibot to ^1.4.2 and the @peculiar/asn1-\* packages (asn1-schema, asn1-cms, asn1-x509, asn1-rsa) to ^2.8.0.
+
 ## 0.5.0
 
 ### Minor Changes
