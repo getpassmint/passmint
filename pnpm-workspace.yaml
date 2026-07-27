@@ -5,7 +5,7 @@ packages:
 catalog:
   typescript: ^6.0.3
   vitest: ^4.1.5
-  tsdown: ^0.21.10
+  tsdown: ^0.22.12
   valibot: ^1.4.2
   fflate: ^0.8.2
   '@peculiar/asn1-schema': ^2.8.0
