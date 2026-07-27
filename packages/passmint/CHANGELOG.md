@@ -1,5 +1,11 @@
 # passmint
 
+## 0.5.2
+
+### Patch Changes
+
+- d29afe2: Update runtime dependency fflate to ^0.8.3.
+
 ## 0.5.1
 
 ### Patch Changes
