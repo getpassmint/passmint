@@ -69,7 +69,7 @@
     "@size-limit/preset-small-lib": "^13.0.1",
     "@types/node": "catalog:",
     "publint": "catalog:",
-    "size-limit": "^12.1.0",
+    "size-limit": "^13.0.1",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
