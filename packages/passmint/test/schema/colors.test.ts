@@ -15,15 +15,10 @@ describe('ColorSchema', () => {
     expect(v.safeParse(ColorSchema, input).success).toBe(true)
   })
 
-  it.each([
-    [''],
-    ['red'],
-    ['rgb(255)'],
-    ['rgba(0,0,0,0.5)'],
-    ['#GG0000'],
-    ['#FFFF'],
-    ['#1234567'],
-  ])('rejects %s', (input) => {
-    expect(v.safeParse(ColorSchema, input).success).toBe(false)
-  })
+  it.each([[''], ['red'], ['rgb(255)'], ['rgba(0,0,0,0.5)'], ['#GG0000'], ['#FFFF'], ['#1234567']])(
+    'rejects %s',
+    (input) => {
+      expect(v.safeParse(ColorSchema, input).success).toBe(false)
+    },
+  )
 })

@@ -25,17 +25,13 @@ describe('BarcodeSchema', () => {
     expect(r.success).toBe(true)
   })
 
-  it.each([
-    ['QR'],
-    ['qrcode'],
-    ['upc_a'],
-    ['ean8'],
-    [''],
-    [null],
-  ])('rejects format %s', (format) => {
-    const r = v.safeParse(BarcodeSchema, { format, message: 'x' })
-    expect(r.success).toBe(false)
-  })
+  it.each([['QR'], ['qrcode'], ['upc_a'], ['ean8'], [''], [null]])(
+    'rejects format %s',
+    (format) => {
+      const r = v.safeParse(BarcodeSchema, { format, message: 'x' })
+      expect(r.success).toBe(false)
+    },
+  )
 
   it('accepts a full barcode with altText and encoding', () => {
     const r = v.safeParse(BarcodeSchema, {
