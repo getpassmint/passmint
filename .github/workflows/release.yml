@@ -55,19 +55,22 @@ jobs:
         with:
           # When there are pending changesets, opens/updates the
           # "Version Packages" PR. When that PR is merged and the
-          # changesets are gone, `publish` runs and ships to npm.
+          # changesets are gone, `publish-script` runs and ships to npm.
           #
           # `pnpm format` after the version bump reformats the files
           # changesets just wrote (package.json, CHANGELOG.md) through
           # Biome, so the committed PR is already lint-clean. Without
           # this, the subsequent release run fails `pnpm lint` because
           # changesets' JSON writer and Biome disagree on formatting.
-          version: pnpm run version-packages
-          publish: pnpm changeset publish
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
-        env:
+          #
           # Trusted publishing handles npm auth + provenance automatically
           # via the OIDC token minted by `permissions: id-token: write`.
           # No NPM_TOKEN needed.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #
+          # v2 renamed every input we set and stopped reading the
+          # `GITHUB_TOKEN` env var, so the token is passed explicitly here.
+          version-script: pnpm run version-packages
+          publish-script: pnpm changeset publish
+          commit-message: 'chore: version packages'
+          pr-title: 'chore: version packages'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
