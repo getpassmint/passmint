@@ -101,7 +101,7 @@ importers:
         version: 0.18.8(@vitest/runner@4.1.10)(@vitest/snapshot@4.1.10)(vitest@4.1.10(@types/node@26.3.0)(vite@7.3.2(@types/node@26.3.0)(yaml@2.9.0)))
       '@size-limit/preset-small-lib':
         specifier: ^13.0.3
-        version: 13.0.3(size-limit@13.0.1)
+        version: 13.0.3(size-limit@13.0.3)
       '@types/node':
         specifier: 'catalog:'
         version: 26.3.0
@@ -109,8 +109,8 @@ importers:
         specifier: 'catalog:'
         version: 0.3.22
       size-limit:
-        specifier: ^13.0.1
-        version: 13.0.1
+        specifier: ^13.0.3
+        version: 13.0.3
       tsdown:
         specifier: 'catalog:'
         version: 0.22.12(@arethetypeswrong/core@0.18.5)(publint@0.3.22)(typescript@6.0.3)(unrun@0.2.37)
@@ -1964,8 +1964,8 @@ packages:
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
-  size-limit@13.0.1:
-    resolution: {integrity: sha512-LKWgnVUfw79W5gcKGIHqjEqBMoZ+YgfYYzlDheYwbRJq1DaaRgOjotFm61YOI/4hbgh4V1Es0uGGp6HLktI3Vw==}
+  size-limit@13.0.3:
+    resolution: {integrity: sha512-KVb2aNEU49BwTR21SVjD+2QHP9gBV/nWsTHzNB/heRwXtHyA7lLQiDZDQ1TiNh/B/TZXKAZrHYyTt+cvBUrzYw==}
     engines: {node: ^22.18.0 || ^24.0.0 || >=26.0.0}
     hasBin: true
 
@@ -3167,21 +3167,21 @@ snapshots:
 
   '@sindresorhus/is@7.2.0': {}
 
-  '@size-limit/esbuild@13.0.3(size-limit@13.0.1)':
+  '@size-limit/esbuild@13.0.3(size-limit@13.0.3)':
     dependencies:
       esbuild: 0.28.2
       nanoid: 6.0.1
-      size-limit: 13.0.1
+      size-limit: 13.0.3
 
-  '@size-limit/file@13.0.3(size-limit@13.0.1)':
+  '@size-limit/file@13.0.3(size-limit@13.0.3)':
     dependencies:
-      size-limit: 13.0.1
+      size-limit: 13.0.3
 
-  '@size-limit/preset-small-lib@13.0.3(size-limit@13.0.1)':
+  '@size-limit/preset-small-lib@13.0.3(size-limit@13.0.3)':
     dependencies:
-      '@size-limit/esbuild': 13.0.3(size-limit@13.0.1)
-      '@size-limit/file': 13.0.3(size-limit@13.0.1)
-      size-limit: 13.0.1
+      '@size-limit/esbuild': 13.0.3(size-limit@13.0.3)
+      '@size-limit/file': 13.0.3(size-limit@13.0.3)
+      size-limit: 13.0.3
 
   '@speed-highlight/core@1.2.15': {}
 
@@ -3815,12 +3815,11 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
-  size-limit@13.0.1:
+  size-limit@13.0.3:
     dependencies:
       bytes-iec: 3.1.1
       lilconfig: 3.1.3
       nanospinner: 1.2.2
-      picocolors: 1.1.1
 
   skin-tone@2.0.0:
     dependencies:
