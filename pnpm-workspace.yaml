@@ -8,10 +8,10 @@ catalog:
   tsdown: ^0.22.12
   valibot: ^1.4.2
   fflate: ^0.8.3
-  '@peculiar/asn1-schema': ^2.8.0
-  '@peculiar/asn1-cms': ^2.8.0
-  '@peculiar/asn1-x509': ^2.8.0
-  '@peculiar/asn1-rsa': ^2.8.0
+  '@peculiar/asn1-schema': ^2.9.4
+  '@peculiar/asn1-cms': ^2.9.4
+  '@peculiar/asn1-x509': ^2.9.4
+  '@peculiar/asn1-rsa': ^2.9.4
   '@types/node': ^26.2.0
   '@cloudflare/vitest-pool-workers': ^0.22.0
   '@arethetypeswrong/cli': ^0.18.5
