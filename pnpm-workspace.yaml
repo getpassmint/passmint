@@ -15,4 +15,4 @@ catalog:
   '@types/node': ^26.2.0
   '@cloudflare/vitest-pool-workers': ^0.22.0
   '@arethetypeswrong/cli': ^0.18.5
-  publint: ^0.3.22
+  publint: ^0.3.24
