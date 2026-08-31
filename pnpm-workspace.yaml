@@ -12,7 +12,7 @@ catalog:
   '@peculiar/asn1-cms': ^2.8.0
   '@peculiar/asn1-x509': ^2.8.0
   '@peculiar/asn1-rsa': ^2.8.0
-  '@types/node': ^26.2.0
+  '@types/node': ^26.4.0
   '@cloudflare/vitest-pool-workers': ^0.22.0
   '@arethetypeswrong/cli': ^0.18.5
   publint: ^0.3.22
