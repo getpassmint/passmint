@@ -4,7 +4,7 @@ packages:
 
 catalog:
   typescript: ^6.0.3
-  vitest: ^4.1.10
+  vitest: ^4.1.11
   tsdown: ^0.22.12
   valibot: ^1.4.2
   fflate: ^0.8.3
