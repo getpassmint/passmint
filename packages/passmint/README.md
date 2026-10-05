@@ -305,7 +305,7 @@ try {
     // err.issues: full Valibot issue list for form-level errors
   } else if (err instanceof PassmintSigningError) {
     // err.code: 'E_KEY_IMPORT' | 'E_CERT_PARSE' | 'E_PEM_DECODE'
-    //         | 'E_SIGN' | 'E_UNSUPPORTED_KEY_FORMAT'
+    //         | 'E_SIGN' | 'E_UNSUPPORTED_KEY_FORMAT' | 'E_WWDR_MISMATCH'
   }
 }
 ```
@@ -344,7 +344,7 @@ Pass.eventTicket({
 Yes. CI runs the full signing pipeline inside real `workerd` via `@cloudflare/vitest-pool-workers`.
 
 **Do I need the Apple WWDR certificate?**  
-Yes — `.pkpass` signatures are verified against Apple's intermediate CA. Download the current G4 WWDR cert from [developer.apple.com/certificationauthority](https://www.apple.com/certificateauthority/).
+Yes — `.pkpass` signatures are verified against Apple's intermediate CA. You need the WWDR intermediate that *issued your Pass Type ID certificate*, not just the newest one. Check with `openssl x509 -in signerCert.pem -noout -issuer` and look at the `OU` (most current certificates show `OU=G4`), then download the matching `AppleWWDRCA<OU>.cer` from [apple.com/certificateauthority](https://www.apple.com/certificateauthority/). `SigningMaterial.fromPem` throws `E_WWDR_MISMATCH` if the WWDR you pass didn't issue your certificate.
 
 **Can I use a `.p12` file directly?**  
 Not in this package — PKCS#12 parsing is Node-only territory and pulls in `node-forge`, which we explicitly avoid. Convert once with `openssl pkcs12 -in cert.p12 -out cert.pem -nodes`, then extract the key to PKCS#8.

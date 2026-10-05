@@ -74,7 +74,7 @@ passmint is ESM-only and ships types. No peer dependencies, no `node:*` imports,
 You need three files before you can sign a `.pkpass`:
 
 1. Your **Pass Type ID certificate** (PEM).
-2. The **Apple WWDR G4 intermediate certificate** (PEM).
+2. The **Apple WWDR intermediate certificate** that issued your Pass Type ID certificate (PEM; usually G4).
 3. Your **private key** in **PKCS#8** PEM form — the one generated alongside your CSR in step 4b.
 
 Work through the following in order. You only do this once per Pass Type ID.
@@ -126,12 +126,21 @@ The resulting file should start with `-----BEGIN PRIVATE KEY-----`. If you hand 
 
 ### 4e. Download the Apple WWDR certificate
 
-Grab the current **G4** WWDR intermediate from [apple.com/certificateauthority](https://www.apple.com/certificateauthority/) and convert it to PEM:
+You need the WWDR intermediate that **issued your Pass Type ID certificate**. Apple has issued these from several WWDR generations (most current certificates come from G4, older ones from G3), so check yours first:
+
+```sh
+openssl x509 -in signerCert.pem -noout -issuer
+# issuer=CN=Apple Worldwide Developer Relations Certification Authority, OU=G4, O=Apple Inc., C=US
+```
+
+The `OU` tells you which one to download from [apple.com/certificateauthority](https://www.apple.com/certificateauthority/). For `OU=G4`:
 
 ```sh
 curl -o AppleWWDRCAG4.cer https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
 openssl x509 -inform DER -in AppleWWDRCAG4.cer -out wwdr.pem
 ```
+
+Bundling the wrong generation produces a pass Wallet refuses to install, so `SigningMaterial.fromPem` checks the pairing and throws `PassmintSigningError` with `code: 'E_WWDR_MISMATCH'` (naming both certificates) if they don't match.
 
 At this point you should have three files: `signerCert.pem`, `signerKey.pem`, `wwdr.pem`. Store their contents as secrets in your runtime (env vars, Workers secrets, Vercel env, etc.) — never commit them.
 

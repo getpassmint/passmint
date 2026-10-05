@@ -64,6 +64,7 @@ export type SigningErrorCode =
   | 'E_PEM_DECODE'
   | 'E_SIGN'
   | 'E_UNSUPPORTED_KEY_FORMAT'
+  | 'E_WWDR_MISMATCH'
 
 /**
  * Thrown by the CMS signing pipeline: key import, certificate parsing,

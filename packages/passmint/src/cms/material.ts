@@ -1,13 +1,19 @@
 import { AsnConvert } from '@peculiar/asn1-schema'
 import { Certificate } from '@peculiar/asn1-x509'
 import { PassmintSigningError } from '../errors'
+import { assertIssuerName, verifyIssuerSignature } from './chain'
 import { toArrayBuffer } from './der'
 import { pemToDer } from './pem'
 
 export interface SigningMaterialFromPemInput {
   /** PEM-encoded Pass Type ID certificate (the signer / leaf cert). */
   signerCertPem: string
-  /** PEM-encoded Apple WWDR intermediate certificate. */
+  /**
+   * PEM-encoded Apple WWDR intermediate certificate — the one that issued
+   * `signerCertPem`. Apple has issued Pass Type ID certificates from several
+   * WWDR generations (most current ones from G4); check yours with
+   * `openssl x509 -in signerCert.pem -noout -issuer` and look at the `OU`.
+   */
   wwdrPem: string
   /**
    * PEM-encoded private key in **PKCS#8** format — not PKCS#1.
@@ -39,6 +45,25 @@ export interface SigningMaterialFromParsedInput {
  * // material can now be reused across many signManifest() calls
  * ```
  */
+/** Memoized async chain checks, keyed by material. Not part of the public API. */
+const chainChecks = new WeakMap<SigningMaterial, Promise<void>>()
+
+/**
+ * Resolve once the WWDR's signature over the signer certificate has been
+ * verified (memoized per material). `fromPem` awaits this before returning;
+ * material built with the synchronous `fromParsed` is checked on first sign.
+ *
+ * @internal
+ */
+export function ensureChainVerified(material: SigningMaterial): Promise<void> {
+  let check = chainChecks.get(material)
+  if (!check) {
+    check = verifyIssuerSignature(material.signerCert, material.wwdrCert)
+    chainChecks.set(material, check)
+  }
+  return check
+}
+
 export class SigningMaterial {
   readonly signerCert: Certificate
   readonly wwdrCert: Certificate
@@ -54,8 +79,16 @@ export class SigningMaterial {
    * Construct from pre-parsed components. Useful when a sibling package
    * has already decoded the certs and imported the key (for example,
    * `@passmint/p12` parsing a PKCS#12 bundle on Node).
+   *
+   * Checks synchronously that the WWDR's subject matches the signer's
+   * issuer. The WWDR's signature over the signer certificate is verified
+   * (once) on the first `signManifest` call, since Web Crypto is async.
+   *
+   * @throws {PassmintSigningError} with code `E_WWDR_MISMATCH` when
+   *   `wwdrCert` is not the certificate that issued `signerCert`.
    */
   static fromParsed(input: SigningMaterialFromParsedInput): SigningMaterial {
+    assertIssuerName(input.signerCert, input.wwdrCert)
     return new SigningMaterial(input.signerCert, input.wwdrCert, input.privateKey)
   }
 
@@ -65,8 +98,14 @@ export class SigningMaterial {
    * with SHA-1 — Apple Wallet still mandates SHA-1 for pass signatures as
    * of iOS 19 (2026).
    *
+   * Also verifies that `wwdrPem` issued `signerCertPem`: the signer's
+   * issuer DN must equal the WWDR's subject DN, and the signer's signature
+   * must verify against the WWDR's public key. A mismatched WWDR would
+   * otherwise produce a pass that Wallet silently refuses to install.
+   *
    * @throws {PassmintSigningError} with code `E_PEM_DECODE`,
-   *   `E_CERT_PARSE`, `E_UNSUPPORTED_KEY_FORMAT`, or `E_KEY_IMPORT`.
+   *   `E_CERT_PARSE`, `E_WWDR_MISMATCH`, `E_UNSUPPORTED_KEY_FORMAT`, or
+   *   `E_KEY_IMPORT`.
    */
   static async fromPem(input: SigningMaterialFromPemInput): Promise<SigningMaterial> {
     // Detect the most common private-key footgun: PKCS#1 instead of PKCS#8.
@@ -103,6 +142,9 @@ export class SigningMaterial {
       )
     }
 
+    assertIssuerName(signerCert, wwdrCert)
+    await verifyIssuerSignature(signerCert, wwdrCert)
+
     let privateKey: CryptoKey
     try {
       privateKey = await globalThis.crypto.subtle.importKey(
@@ -120,6 +162,8 @@ export class SigningMaterial {
       )
     }
 
-    return new SigningMaterial(signerCert, wwdrCert, privateKey)
+    const material = new SigningMaterial(signerCert, wwdrCert, privateKey)
+    chainChecks.set(material, Promise.resolve())
+    return material
   }
 }
