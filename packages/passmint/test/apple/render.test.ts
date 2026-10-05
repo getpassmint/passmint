@@ -270,7 +270,7 @@ describe('renderApplePass — new iOS 27 barcode formats', () => {
     ['ean13', 'PKBarcodeFormatEAN13'],
     ['code39', 'PKBarcodeFormatCode39'],
     ['codabar', 'PKBarcodeFormatCodabar'],
-    ['itf', 'PKBarcodeFormatITF'],
+    ['itf', 'PKBarcodeFormatI2of5'],
   ])('maps %s to %s', (format, pkFormat) => {
     const result = renderApplePass({
       ...baseInput,

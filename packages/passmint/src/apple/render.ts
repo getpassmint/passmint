@@ -90,7 +90,7 @@ const BARCODE_FORMAT: Record<string, string> = {
   ean13: 'PKBarcodeFormatEAN13',
   code39: 'PKBarcodeFormatCode39',
   codabar: 'PKBarcodeFormatCodabar',
-  itf: 'PKBarcodeFormatITF',
+  itf: 'PKBarcodeFormatI2of5',
 }
 
 const TRANSIT_TYPE: Record<string, string> = {

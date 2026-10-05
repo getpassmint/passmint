@@ -247,7 +247,9 @@ earlier won't render these — include a `qr` (or other pre-iOS-27 format) entry
 in the same `barcodes` array as a fallback. Wallet renders the first format it
 supports, and passmint preserves array order rather than reordering or
 stripping entries. On Google Wallet these map to `EAN_13`, `CODE_39`,
-`CODABAR`, and `ITF_14` respectively (note `itf` → `ITF_14`, not `ITF`).
+`CODABAR`, and `ITF_14` respectively (note `itf` → `ITF_14`, not `ITF`). On
+Apple, `itf` renders as `PKBarcodeFormatI2of5` (Interleaved 2 of 5), the
+constant Apple documents.
 
 ### Deferred
 

@@ -147,3 +147,29 @@ describe('ManifestSigner seam', () => {
     })
   })
 })
+
+describe('ITF barcode in a signed pass', () => {
+  it("writes Apple's documented PKBarcodeFormatI2of5 constant into pass.json", async () => {
+    const fixtures = generateCmsFixtures()
+    const material = await SigningMaterial.fromPem({
+      signerCertPem: fixtures.leafCertPem,
+      wwdrPem: fixtures.wwdrCertPem,
+      privateKeyPkcs8Pem: fixtures.leafKeyPkcs8Pem,
+    })
+    const signed = await Pass.storeCard({
+      passTypeIdentifier: 'pass.com.example.itf',
+      serialNumber: 'itf-1',
+      teamIdentifier: 'ABCD1234EF',
+      organizationName: 'passmint',
+      description: 'ITF barcode',
+      images: { icon: { x2: { bytes: FAKE_ICON } } },
+      barcodes: [{ format: 'itf', message: '12345678901231' }],
+    }).sign(material)
+
+    const passJson = JSON.parse(
+      new TextDecoder().decode(entriesOf(await signed.toUint8Array())['pass.json']),
+    ) as { barcodes: Array<{ format: string }> }
+    expect(passJson.barcodes[0]?.format).toBe('PKBarcodeFormatI2of5')
+    expect(JSON.stringify(passJson)).not.toContain('PKBarcodeFormatITF')
+  })
+})
