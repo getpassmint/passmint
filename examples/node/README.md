@@ -12,10 +12,18 @@ Two sample Node scripts for the real-device gate tests:
 ### Prerequisites
 
 1. A **Pass Type ID certificate** downloaded from [Apple Developer](https://developer.apple.com/account/resources/certificates/list).
-2. The **Apple WWDR intermediate CA** in PEM form. Download from
-   https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer and convert:
+2. The **Apple WWDR intermediate CA that issued your certificate**, in PEM
+   form. Apple has issued Pass Type ID certificates from several WWDR
+   generations (most current ones from G4), so check which one yours names:
    ```sh
-   openssl x509 -inform DER -in AppleWWDRCAG3.cer -out wwdr.pem
+   openssl x509 -in pass-type-id.pem -noout -issuer
+   # issuer=CN=Apple Worldwide Developer Relations Certification Authority, OU=G4, O=Apple Inc., C=US
+   ```
+   Download the matching `AppleWWDRCA<OU>.cer` from
+   https://www.apple.com/certificateauthority/ (for `OU=G4`,
+   `AppleWWDRCAG4.cer`) and convert:
+   ```sh
+   openssl x509 -inform DER -in AppleWWDRCAG4.cer -out wwdr.pem
    ```
 3. The matching private key in **PKCS#8** PEM form. If you have a PKCS#1 key
    (header `-----BEGIN RSA PRIVATE KEY-----`), convert it:
@@ -40,6 +48,9 @@ Wallet will prompt to add the pass.
 
 ### Troubleshooting
 
+- **`E_WWDR_MISMATCH`** — the WWDR intermediate you passed didn't issue your
+  Pass Type ID certificate (typically G3 bundled with a G4-issued cert).
+  Re-check the issuer `OU` and download the matching intermediate (step 2).
 - **"This pass cannot be installed"** usually means cert chain or pass type
   identifier mismatch. Verify that your `PASSMINT_PASS_TYPE` matches the
   Common Name of the Pass Type ID certificate exactly (`pass.com.…`).

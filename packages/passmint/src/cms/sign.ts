@@ -29,7 +29,7 @@ import {
 } from '@peculiar/asn1-schema'
 import { PassmintSigningError } from '../errors'
 import { buildSetOf, sortSetOfByBytes, toArrayBuffer } from './der'
-import type { SigningMaterial } from './material'
+import { ensureChainVerified, type SigningMaterial } from './material'
 
 // --- Tiny wrapper classes for bare DER value encoding ---
 // We wrap the desired value in a SEQUENCE, serialize, then strip the outer
@@ -123,6 +123,10 @@ export async function signManifest(
   manifest: Uint8Array,
   material: SigningMaterial,
 ): Promise<Uint8Array> {
+  // 0. Make sure the WWDR actually issued the signer (no-op after the first
+  //    call; already done by `SigningMaterial.fromPem`).
+  await ensureChainVerified(material)
+
   // 1. SHA-1 digest of the manifest.
   const digest = new Uint8Array(
     await globalThis.crypto.subtle.digest('SHA-1', toArrayBuffer(manifest)),

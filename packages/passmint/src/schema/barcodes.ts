@@ -15,7 +15,7 @@ import { LocalizedStringSchema } from './localization'
  *   - ean13    → PKBarcodeFormatEAN13  / EAN_13
  *   - code39   → PKBarcodeFormatCode39 / CODE_39
  *   - codabar  → PKBarcodeFormatCodabar / CODABAR
- *   - itf      → PKBarcodeFormatITF    / ITF_14
+ *   - itf      → PKBarcodeFormatI2of5  / ITF_14
  *
  * iOS 27+ only renders ean13/code39/codabar/itf. For iOS 26 and earlier,
  * include a `qr` (or other pre-iOS-27) barcode entry in the same `barcodes`
