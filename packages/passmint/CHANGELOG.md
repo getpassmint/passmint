@@ -1,5 +1,18 @@
 # passmint
 
+## 0.6.0
+
+### Minor Changes
+
+- aa60997: Add `images.googleObject` for per-pass Google Wallet images that don't touch the class: `heroImage` (overrides the class hero on one object), `logo` (generic objects only, e.g. a member photo; other styles throw `E_GOOGLE_RENDER`) and `imageModules` (rendered as `imageModulesData`). Each field can be set to `null` to clear it explicitly: the object falls back to its default image, or gets `null` so a REST PATCH removes it. New exported types: `GoogleObjectImages`, `GoogleImageModule`.
+- ea09487: Check that the WWDR intermediate actually issued the signer certificate. `SigningMaterial.fromPem` now verifies that the signer's issuer DN matches the WWDR's subject and that the signer's signature verifies against the WWDR's public key, and throws `PassmintSigningError` with the new code `E_WWDR_MISMATCH` (naming both certificates) when they don't. `fromParsed` checks the DN up front and the signature on the first `signManifest` call. Previously a mismatched pair (e.g. a G4-issued Pass Type ID certificate bundled with the G3 intermediate) signed without error and produced a pass Wallet refused to install, so inputs that used to be accepted can now throw. Docs now tell you to download the intermediate that issued your certificate rather than G3.
+  
+  Fix the Apple barcode format for `itf`: it now renders as Apple's documented `PKBarcodeFormatI2of5` instead of the undocumented `PKBarcodeFormatITF`. The public `itf` name and Google's `ITF_14` mapping are unchanged.
+
+### Patch Changes
+
+- 862fa5d: Fix Google Wallet logo and hero field names. Every class used to get `programLogo` and `heroImage`, which only `loyaltyClass` supports under those names, so Google rejected classes with a logo or hero for the other types. The logo now goes to `titleImage` on offers, `logo` on event tickets and transit, `flightHeader.carrier.airlineLogo` on flights, and the generic object's `logo` (`genericClass` has no image fields, so the generic hero moves to the object too). For non-generic types the hero is now emitted on the class only, so objects inherit it and pick up later class changes instead of keeping the hero they were issued with.
+
 ## 0.5.2
 
 ### Patch Changes
