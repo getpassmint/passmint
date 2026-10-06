@@ -166,6 +166,32 @@ Google needs images as HTTPS URLs, so `images.logo.x2` must use the `{ url }` fo
 | `flight`      | class `flightHeader.carrier.airlineLogo`   | class `heroImage`  |
 | `generic`     | object `logo` (the class has no image fields) | object `heroImage` |
 
+### Per-pass Google images
+
+`images.googleObject` sets images on the Google object (this one pass) instead of the class (shared by every pass of the template). It's Google-only; Apple output ignores it.
+
+```ts
+images: {
+  icon: { x2: { bytes: iconPng } },
+  heroImage: { url: 'https://cdn.example.com/template-hero.jpg' }, // class
+  googleObject: {
+    heroImage: { url: 'https://cdn.example.com/passes/42/hero.jpg' },
+    logo: { url: 'https://cdn.example.com/passes/42/photo.png' }, // generic only
+    imageModules: [
+      { id: 'pass-thumbnail', image: { url: 'https://cdn.example.com/passes/42/photo.png' }, description: 'Member photo' },
+    ],
+  },
+}
+```
+
+| Field          | Google object field | Types                                   |
+| -------------- | ------------------- | --------------------------------------- |
+| `heroImage`    | `heroImage`         | all (overrides the class hero)          |
+| `logo`         | `logo`              | `generic` only; other styles throw `E_GOOGLE_RENDER` |
+| `imageModules` | `imageModulesData`  | all (Google shows one module from the object) |
+
+Leave a field out to keep the default. Set it to `null` to clear an override: the object gets the default image if passmint renders one there, otherwise the field is emitted as `null` so a Google REST PATCH removes the image an earlier render set. The class is never affected.
+
 ## One schema, two wallets
 
 The same `Pass` produces both outputs — write your pass definition once:

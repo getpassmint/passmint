@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { LocalizedStringSchema } from './localization'
 import { HttpsUrlSchema } from './url'
 
 /**
@@ -50,6 +51,53 @@ export const ImageTripleSchema = v.object({
 
 export type ImageTriple = v.InferOutput<typeof ImageTripleSchema>
 
+const GoogleUrlImageSchema = v.object({ url: HttpsUrlSchema })
+
+/**
+ * One Google Wallet image module: a full-width image shown in the pass
+ * details. Google displays at most one module from the object (plus one
+ * from the class).
+ */
+export const GoogleImageModuleSchema = v.object({
+  /** Module ID, so later updates can address the same module. */
+  id: v.pipe(v.string(), v.minLength(1)),
+  /** The image. Google requires an HTTPS URL. */
+  image: GoogleUrlImageSchema,
+  /** Accessibility text, rendered as the image's `contentDescription`. */
+  description: v.optional(LocalizedStringSchema),
+})
+
+export type GoogleImageModule = v.InferOutput<typeof GoogleImageModuleSchema>
+
+/**
+ * Google Wallet images set on the object (one pass) rather than the class
+ * (shared by every pass of the template). Google-only; Apple ignores it.
+ *
+ * Each field is three-state:
+ * - omitted: no override, the object gets whatever passmint renders by default;
+ * - a value: the object gets this image;
+ * - `null`: explicitly clear the override. The object gets the default if
+ *   there is one (e.g. the generic object's logo from `images.logo`),
+ *   otherwise the field is emitted as `null` so a Google REST PATCH removes
+ *   what an earlier render set.
+ */
+export const GoogleObjectImagesSchema = v.object({
+  /**
+   * Object `heroImage`, replacing the class hero on this pass only.
+   * Supported by every Google object type.
+   */
+  heroImage: v.optional(v.nullable(GoogleUrlImageSchema)),
+  /**
+   * Object `logo`. Only `genericObject` has one (top left of the card, also
+   * the list thumbnail); setting it on any other style throws at render.
+   */
+  logo: v.optional(v.nullable(GoogleUrlImageSchema)),
+  /** Object `imageModulesData`. Supported by every Google object type. */
+  imageModules: v.optional(v.nullable(v.pipe(v.array(GoogleImageModuleSchema), v.minLength(1)))),
+})
+
+export type GoogleObjectImages = v.InferOutput<typeof GoogleObjectImagesSchema>
+
 /**
  * Full image set for a pass. Only `icon` is required (Apple requires icon
  * for lock-screen display). Others are optional per pass style.
@@ -70,6 +118,11 @@ export const ImagesSchema = v.object({
       url: HttpsUrlSchema,
     }),
   ),
+  /**
+   * Google Wallet images for this pass's object, independent of the class.
+   * See {@link GoogleObjectImagesSchema}.
+   */
+  googleObject: v.optional(GoogleObjectImagesSchema),
 })
 
 export type Images = v.InferOutput<typeof ImagesSchema>
