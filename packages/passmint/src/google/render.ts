@@ -1,7 +1,7 @@
 import { PassmintGoogleError, PassmintRenderError } from '../errors'
 import type { Barcode } from '../schema/barcodes'
 import type { Field } from '../schema/fields'
-import type { ImageSource } from '../schema/images'
+import type { GoogleObjectImages, ImageSource } from '../schema/images'
 import type { LocalizedString } from '../schema/localization'
 import { defaultValue, translations } from '../schema/localization'
 import type { Location } from '../schema/locations'
@@ -466,6 +466,57 @@ function renderGeneric(input: PassInput, classId: string, objectId: string): Sty
   }
 }
 
+// --- object-level images ---
+
+/**
+ * Apply `images.googleObject` to the rendered object. Runs after the
+ * per-style renderer so a value replaces any default image the renderer
+ * put on the object, and `null` falls back to that default (or emits
+ * `null` so a REST PATCH clears the field). Never touches the class.
+ *
+ * Field names per the v1 REST reference — every object type has
+ * `heroImage` and `imageModulesData`; only genericObject has `logo`:
+ * https://developers.google.com/wallet/reference/rest/v1/genericobject
+ * https://developers.google.com/wallet/reference/rest/v1/loyaltyobject
+ * https://developers.google.com/wallet/reference/rest/v1/ImageModuleData
+ */
+function applyObjectImages(
+  images: GoogleObjectImages,
+  objectDef: Record<string, unknown>,
+  objectKey: keyof GoogleSavePayload,
+): void {
+  if (images.logo !== undefined && objectKey !== 'genericObjects') {
+    throw new PassmintGoogleError(
+      'E_GOOGLE_RENDER',
+      `images.googleObject.logo is only supported on generic passes (Google ${String(objectKey)} have no object logo). Use images.logo for the class logo, or images.googleObject.imageModules for a per-pass image.`,
+    )
+  }
+  const set = (key: string, value: Record<string, unknown> | Record<string, unknown>[] | null) => {
+    if (value !== null) objectDef[key] = value
+    else if (objectDef[key] === undefined) objectDef[key] = null
+  }
+  if (images.heroImage !== undefined) {
+    set('heroImage', images.heroImage && { sourceUri: { uri: images.heroImage.url } })
+  }
+  if (images.logo !== undefined) {
+    set('logo', images.logo && { sourceUri: { uri: images.logo.url } })
+  }
+  if (images.imageModules !== undefined) {
+    set(
+      'imageModulesData',
+      images.imageModules === null
+        ? null
+        : images.imageModules.map((module) => {
+            const mainImage: Record<string, unknown> = { sourceUri: { uri: module.image.url } }
+            if (module.description !== undefined) {
+              mainImage.contentDescription = toGoogleLocalized(module.description)
+            }
+            return { id: module.id, mainImage }
+          }),
+    )
+  }
+}
+
 // --- public entry point ---
 
 /**
@@ -529,6 +580,10 @@ export function renderGooglePayload(
     result = renderOffer(input, classId, objectId)
   } else {
     result = renderGeneric(input, classId, objectId)
+  }
+
+  if (input.images.googleObject) {
+    applyObjectImages(input.images.googleObject, result.objectDef, result.objectKey)
   }
 
   if (input.applyRaw?.google) {

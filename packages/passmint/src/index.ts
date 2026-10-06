@@ -65,6 +65,8 @@ export type {
   Field,
   FieldValue,
   GenericPassInput,
+  GoogleImageModule,
+  GoogleObjectImages,
   ImageSource,
   Images,
   ImageTriple,

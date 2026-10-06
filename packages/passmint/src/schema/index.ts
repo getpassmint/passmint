@@ -13,7 +13,13 @@ export type {
   NumberStyle,
   TextAlignment,
 } from './fields'
-export type { ImageSource, Images, ImageTriple } from './images'
+export type {
+  GoogleImageModule,
+  GoogleObjectImages,
+  ImageSource,
+  Images,
+  ImageTriple,
+} from './images'
 export type { LocalizedString } from './localization'
 export type { Beacon, Location } from './locations'
 export type {
