@@ -155,6 +155,17 @@ const url = await pass.toGoogleSaveLink(google, { origins: ['example.com'] })
 
 Drop `url` into an `<a href>` with Google's "Add to Google Wallet" button and you're done.
 
+Google needs images as HTTPS URLs, so `images.logo.x2` must use the `{ url }` form for Google output. passmint puts the logo and hero where each Google type expects them:
+
+| Google type   | `images.logo`                              | `images.heroImage` |
+| ------------- | ------------------------------------------ | ------------------ |
+| `loyalty`     | class `programLogo`                        | class `heroImage`  |
+| `offer`       | class `titleImage`                         | class `heroImage`  |
+| `eventTicket` | class `logo`                               | class `heroImage`  |
+| `transit`     | class `logo`                               | class `heroImage`  |
+| `flight`      | class `flightHeader.carrier.airlineLogo`   | class `heroImage`  |
+| `generic`     | object `logo` (the class has no image fields) | object `heroImage` |
+
 ## One schema, two wallets
 
 The same `Pass` produces both outputs — write your pass definition once:

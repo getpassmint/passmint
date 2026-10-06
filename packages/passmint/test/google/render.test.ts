@@ -346,24 +346,6 @@ describe('renderGooglePayload — shared mapping', () => {
     expect(obj.locations).toEqual([{ latitude: 37.33, longitude: -122.03 }])
   })
 
-  it('uses heroImage URL in both class and object', () => {
-    const payload = renderGooglePayload(
-      {
-        ...base,
-        style: 'generic',
-        images: {
-          icon: { x2: { bytes: FAKE_ICON } },
-          heroImage: { url: 'https://example.com/hero.jpg' },
-        },
-      },
-      { issuerId },
-    )
-    const cls = (payload.genericClasses as Record<string, unknown>[])[0] as Record<string, unknown>
-    expect(
-      ((cls.heroImage as Record<string, unknown>).sourceUri as Record<string, unknown>).uri,
-    ).toBe('https://example.com/hero.jpg')
-  })
-
   it('throws when logo is provided as bytes instead of URL', () => {
     expect(() =>
       renderGooglePayload(
@@ -490,5 +472,148 @@ describe('renderGooglePayload — new iOS 27 barcode formats', () => {
     const obj = (payload.genericObjects as Record<string, unknown>[])[0] as Record<string, unknown>
     const barcode = obj.barcode as Record<string, unknown>
     expect(barcode.type).toBe(googleType)
+  })
+})
+
+// Field names verified against the Google Wallet v1 REST reference:
+// https://developers.google.com/wallet/reference/rest/v1/loyaltyclass (programLogo)
+// https://developers.google.com/wallet/reference/rest/v1/offerclass (titleImage)
+// https://developers.google.com/wallet/reference/rest/v1/eventticketclass (logo)
+// https://developers.google.com/wallet/reference/rest/v1/transitclass (logo)
+// https://developers.google.com/wallet/reference/rest/v1/flightclass (flightHeader.carrier.airlineLogo)
+// https://developers.google.com/wallet/reference/rest/v1/genericclass (no image fields besides imageModulesData)
+// https://developers.google.com/wallet/reference/rest/v1/genericobject (logo, heroImage)
+describe('renderGooglePayload — logo and hero field names per type', () => {
+  const LOGO = 'https://example.com/logo.png'
+  const HERO = 'https://example.com/hero.jpg'
+  const images = {
+    icon: { x2: { bytes: FAKE_ICON } },
+    logo: { x2: { url: LOGO } },
+    heroImage: { url: HERO },
+  }
+  const logoImage = { sourceUri: { uri: LOGO } }
+  const heroImage = { sourceUri: { uri: HERO } }
+  const flightSemantics = {
+    airlineCode: 'AA',
+    flightNumber: 100,
+    departureAirportCode: 'SFO',
+    arrivalAirportCode: 'JFK',
+  }
+
+  const cases: Array<{
+    name: string
+    input: PassInput
+    classKey: string
+    objectKey: string
+    logoKey: string
+  }> = [
+    {
+      name: 'loyalty',
+      input: { ...base, style: 'storeCard', images },
+      classKey: 'loyaltyClasses',
+      objectKey: 'loyaltyObjects',
+      logoKey: 'programLogo',
+    },
+    {
+      name: 'offer',
+      input: { ...base, style: 'coupon', images },
+      classKey: 'offerClasses',
+      objectKey: 'offerObjects',
+      logoKey: 'titleImage',
+    },
+    {
+      name: 'eventTicket',
+      input: { ...base, style: 'eventTicket', images },
+      classKey: 'eventTicketClasses',
+      objectKey: 'eventTicketObjects',
+      logoKey: 'logo',
+    },
+    {
+      name: 'transit',
+      input: { ...base, style: 'boardingPass', transitType: 'train', images },
+      classKey: 'transitClasses',
+      objectKey: 'transitObjects',
+      logoKey: 'logo',
+    },
+  ]
+
+  for (const c of cases) {
+    it(`${c.name}: logo on class as ${c.logoKey}, hero on class only`, () => {
+      const { cls, obj } = getClassAndObject(
+        renderGooglePayload(c.input, { issuerId }) as Record<string, unknown>,
+        c.classKey,
+        c.objectKey,
+      )
+      expect(cls[c.logoKey]).toEqual(logoImage)
+      expect(cls.heroImage).toEqual(heroImage)
+      for (const key of ['programLogo', 'titleImage', 'logo']) {
+        if (key !== c.logoKey) expect(cls[key], key).toBeUndefined()
+      }
+      // The object inherits the class hero; copying it would pin it.
+      expect(obj.heroImage).toBeUndefined()
+      expect(obj.logo).toBeUndefined()
+      expect(obj.programLogo).toBeUndefined()
+    })
+  }
+
+  it('flight: logo as flightHeader.carrier.airlineLogo, hero on class only', () => {
+    const { cls, obj } = getClassAndObject(
+      renderGooglePayload(
+        { ...base, style: 'boardingPass', transitType: 'air', semantics: flightSemantics, images },
+        { issuerId },
+      ) as Record<string, unknown>,
+      'flightClasses',
+      'flightObjects',
+    )
+    const header = cls.flightHeader as Record<string, Record<string, unknown>>
+    expect(header.carrier).toEqual({ carrierIataCode: 'AA', airlineLogo: logoImage })
+    expect(cls.programLogo).toBeUndefined()
+    expect(cls.logo).toBeUndefined()
+    expect(cls.heroImage).toEqual(heroImage)
+    expect(obj.heroImage).toBeUndefined()
+  })
+
+  it('flight: no airlineLogo key when there is no logo', () => {
+    const { cls } = getClassAndObject(
+      renderGooglePayload(
+        { ...base, style: 'boardingPass', transitType: 'air', semantics: flightSemantics },
+        { issuerId },
+      ) as Record<string, unknown>,
+      'flightClasses',
+      'flightObjects',
+    )
+    expect((cls.flightHeader as Record<string, unknown>).carrier).toEqual({
+      carrierIataCode: 'AA',
+    })
+  })
+
+  it('generic: no image fields on the class; logo and hero on the object', () => {
+    const { cls, obj } = getClassAndObject(
+      renderGooglePayload({ ...base, style: 'generic', images }, { issuerId }) as Record<
+        string,
+        unknown
+      >,
+      'genericClasses',
+      'genericObjects',
+    )
+    expect(cls.programLogo).toBeUndefined()
+    expect(cls.logo).toBeUndefined()
+    expect(cls.heroImage).toBeUndefined()
+    expect(obj.logo).toEqual(logoImage)
+    expect(obj.heroImage).toEqual(heroImage)
+  })
+
+  it('emits no image fields when the pass has no logo or hero', () => {
+    for (const c of cases) {
+      const input = { ...c.input, images: { icon: { x2: { bytes: FAKE_ICON } } } } as PassInput
+      const { cls, obj } = getClassAndObject(
+        renderGooglePayload(input, { issuerId }) as Record<string, unknown>,
+        c.classKey,
+        c.objectKey,
+      )
+      expect(cls[c.logoKey], c.name).toBeUndefined()
+      expect(cls.heroImage, c.name).toBeUndefined()
+      expect(obj.heroImage, c.name).toBeUndefined()
+    }
   })
 })
