@@ -231,14 +231,66 @@ function commonClassFields(input: PassInput, classId: string): Record<string, un
   if (input.colors?.background !== undefined) {
     cls.hexBackgroundColor = toHexColor(input.colors.background)
   }
-  if (input.images.logo) {
-    const logoImage = maybeToGoogleImage(input.images.logo.x2, 'images.logo.x2')
-    if (logoImage) cls.programLogo = logoImage
-  }
-  if (input.images.heroImage) {
-    cls.heroImage = { sourceUri: { uri: input.images.heroImage.url } }
-  }
   return cls
+}
+
+// --- images ---
+//
+// Google names the logo and hero fields differently per class/object type,
+// and some types have no slot at all. Unknown fields make Google reject the
+// save-link JWT / REST insert, so each renderer places images explicitly.
+// Verified against the v1 REST reference (2026-10-06):
+//
+// | type        | class logo                       | class hero | object logo | object hero |
+// | ----------- | -------------------------------- | ---------- | ----------- | ----------- |
+// | loyalty     | programLogo                      | heroImage  | —           | heroImage   |
+// | offer       | titleImage                       | heroImage  | —           | heroImage   |
+// | eventTicket | logo                             | heroImage  | —           | heroImage   |
+// | transit     | logo                             | heroImage  | —           | heroImage   |
+// | flight      | flightHeader.carrier.airlineLogo | heroImage  | —           | heroImage   |
+// | generic     | —                                | —          | logo        | heroImage   |
+//
+// https://developers.google.com/wallet/reference/rest/v1/loyaltyclass
+// https://developers.google.com/wallet/reference/rest/v1/offerclass
+// https://developers.google.com/wallet/reference/rest/v1/eventticketclass
+// https://developers.google.com/wallet/reference/rest/v1/transitclass
+// https://developers.google.com/wallet/reference/rest/v1/flightclass
+// https://developers.google.com/wallet/reference/rest/v1/genericclass
+// https://developers.google.com/wallet/reference/rest/v1/genericobject
+//
+// The template hero goes on the class where the class supports one; objects
+// then inherit it ("If none is present, hero image of the class ... will be
+// displayed"). Copying it onto every object would pin each object to the
+// hero at issue time, so a later class update would never show. Generic is
+// the exception: its class has no image fields, so logo and hero go on the
+// object.
+
+/** The pass logo as a Google Image, from `images.logo.x2`. */
+function logoImage(input: PassInput): Record<string, unknown> | undefined {
+  if (!input.images.logo) return undefined
+  return maybeToGoogleImage(input.images.logo.x2, 'images.logo.x2')
+}
+
+/** The pass hero as a Google Image, from `images.heroImage`. */
+function heroImage(input: PassInput): Record<string, unknown> | undefined {
+  if (!input.images.heroImage) return undefined
+  return { sourceUri: { uri: input.images.heroImage.url } }
+}
+
+/**
+ * Class image fields for every type whose class has a top-level logo
+ * (named `logoKey`) and a `heroImage`.
+ */
+function classImageFields(
+  input: PassInput,
+  logoKey: 'programLogo' | 'titleImage' | 'logo' | null,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  const logo = logoImage(input)
+  if (logo && logoKey) out[logoKey] = logo
+  const hero = heroImage(input)
+  if (hero) out.heroImage = hero
+  return out
 }
 
 function commonObjectFields(
@@ -261,9 +313,6 @@ function commonObjectFields(
   if (textModules) obj.textModulesData = textModules
   const locations = renderLocations(input.locations)
   if (locations) obj.locations = locations
-  if (input.images.heroImage) {
-    obj.heroImage = { sourceUri: { uri: input.images.heroImage.url } }
-  }
   if (input.expirationDate !== undefined) {
     obj.validTimeInterval = { end: { date: input.expirationDate } }
   }
@@ -276,6 +325,7 @@ function renderEventTicket(input: PassInput, classId: string, objectId: string):
     objectKey: 'eventTicketObjects',
     classDef: {
       ...commonClassFields(input, classId),
+      ...classImageFields(input, 'logo'),
       eventName: toGoogleLocalized(resolveTitle(input)),
     },
     objectDef: {
@@ -313,10 +363,14 @@ function renderFlight(input: PassInput, classId: string, objectId: string): Styl
     )
   }
 
+  // FlightClass has no top-level logo; the airline logo is the analog.
+  const carrierLogo = logoImage(input)
+  const airlineLogo = carrierLogo ? { airlineLogo: carrierLogo } : {}
   const classDef: Record<string, unknown> = {
     ...commonClassFields(input, classId),
+    ...classImageFields(input, null),
     flightHeader: {
-      carrier: { carrierIataCode: airlineCode },
+      carrier: { carrierIataCode: airlineCode, ...airlineLogo },
       flightNumber: String(flightNumber),
     },
     origin: { airportIataCode: departureAirportCode },
@@ -350,6 +404,7 @@ function renderTransit(input: PassInput, classId: string, objectId: string): Sty
     objectKey: 'transitObjects',
     classDef: {
       ...commonClassFields(input, classId),
+      ...classImageFields(input, 'logo'),
       transitType: googleTransitType,
     },
     objectDef: {
@@ -365,6 +420,7 @@ function renderLoyalty(input: PassInput, classId: string, objectId: string): Sty
     objectKey: 'loyaltyObjects',
     classDef: {
       ...commonClassFields(input, classId),
+      ...classImageFields(input, 'programLogo'),
       programName: defaultValue(resolveTitle(input)),
     },
     objectDef: {
@@ -381,6 +437,7 @@ function renderOffer(input: PassInput, classId: string, objectId: string): Style
     objectKey: 'offerObjects',
     classDef: {
       ...commonClassFields(input, classId),
+      ...classImageFields(input, 'titleImage'),
       title: defaultValue(resolveTitle(input)),
       provider: input.organizationName,
       redemptionChannel: 'BOTH',
@@ -392,12 +449,17 @@ function renderOffer(input: PassInput, classId: string, objectId: string): Style
 }
 
 function renderGeneric(input: PassInput, classId: string, objectId: string): StyleResult {
+  const logo = logoImage(input)
+  const hero = heroImage(input)
   return {
     classKey: 'genericClasses',
     objectKey: 'genericObjects',
+    // GenericClass has no logo or hero fields; both live on the object.
     classDef: commonClassFields(input, classId),
     objectDef: {
       ...commonObjectFields(input, classId, objectId),
+      ...(logo ? { logo } : {}),
+      ...(hero ? { heroImage: hero } : {}),
       cardTitle: toGoogleLocalized(resolveTitle(input)),
       header: toGoogleLocalized(resolveHeader(input)),
     },
