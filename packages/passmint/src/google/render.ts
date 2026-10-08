@@ -5,7 +5,7 @@ import type { GoogleObjectImages, ImageSource } from '../schema/images'
 import type { LocalizedString } from '../schema/localization'
 import { defaultValue, translations } from '../schema/localization'
 import type { Location } from '../schema/locations'
-import type { PassInput } from '../schema/pass'
+import type { GoogleLoyaltyPoints, PassInput } from '../schema/pass'
 import type { GoogleSavePayload } from './jwt'
 
 /**
@@ -414,7 +414,37 @@ function renderTransit(input: PassInput, classId: string, objectId: string): Sty
   }
 }
 
+const INT32_MIN = -2_147_483_648
+const INT32_MAX = 2_147_483_647
+
+/** passmint's loyalty balance as Google's LoyaltyPoints. */
+function toLoyaltyPoints(points: GoogleLoyaltyPoints): Record<string, unknown> {
+  const { balance } = points
+  return {
+    label: points.label,
+    balance:
+      typeof balance === 'string'
+        ? { string: balance }
+        : Number.isInteger(balance) && balance >= INT32_MIN && balance <= INT32_MAX
+          ? { int: balance }
+          : { double: balance },
+  }
+}
+
 function renderLoyalty(input: PassInput, classId: string, objectId: string): StyleResult {
+  const loyalty = input.style === 'storeCard' ? input.google?.loyalty : undefined
+  const objectDef: Record<string, unknown> = {
+    ...commonObjectFields(input, classId, objectId),
+    accountId: input.serialNumber,
+  }
+  // Undefined keeps the long-standing default (the description); null omits the field.
+  const accountName =
+    loyalty?.accountName === undefined ? defaultValue(resolveHeader(input)) : loyalty.accountName
+  if (accountName !== null) objectDef.accountName = accountName
+  if (loyalty?.points) objectDef.loyaltyPoints = toLoyaltyPoints(loyalty.points)
+  if (loyalty?.secondaryPoints) {
+    objectDef.secondaryLoyaltyPoints = toLoyaltyPoints(loyalty.secondaryPoints)
+  }
   return {
     classKey: 'loyaltyClasses',
     objectKey: 'loyaltyObjects',
@@ -423,11 +453,7 @@ function renderLoyalty(input: PassInput, classId: string, objectId: string): Sty
       ...classImageFields(input, 'programLogo'),
       programName: defaultValue(resolveTitle(input)),
     },
-    objectDef: {
-      ...commonObjectFields(input, classId, objectId),
-      accountId: input.serialNumber,
-      accountName: defaultValue(resolveHeader(input)),
-    },
+    objectDef,
   }
 }
 

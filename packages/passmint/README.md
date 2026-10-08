@@ -192,6 +192,28 @@ images: {
 
 Leave a field out to keep the default. Set it to `null` to clear an override: the object gets the default image if passmint renders one there, otherwise the field is emitted as `null` so a Google REST PATCH removes the image an earlier render set. The class is never affected.
 
+### Google loyalty balance
+
+Store cards render as Google `loyaltyObject`s. `google.loyalty` adds Google's native balance and account-holder name. It's Google-only; Apple output ignores it.
+
+```ts
+const pass = Pass.storeCard({
+  // ...base fields
+  google: {
+    loyalty: {
+      points: { label: 'Stamps', balance: '6 / 10' },         // → loyaltyPoints, balance.string
+      secondaryPoints: { label: 'Reward', balance: 'Latte' }, // → secondaryLoyaltyPoints
+      accountName: 'Ana García',                              // the holder's name
+    },
+  },
+}).build()
+```
+
+- `balance` takes a string (`balance.string`), an int32 (`balance.int`) or any other finite number (`balance.double`).
+- `accountName` defaults to the pass `description`, which is what earlier versions always sent. Set it to `null` to leave it off for anonymous cards.
+- Fields you leave out (an absent `points`, or `accountName: null`) are left out of the object, so a Google PATCH won't clear a value already on the card. Use an update or replace to remove it.
+- These all live on the object, so changing a balance never re-submits the class for review.
+
 ## One schema, two wallets
 
 The same `Pass` produces both outputs — write your pass definition once:

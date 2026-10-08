@@ -428,3 +428,38 @@ describe('GenericPassSchema — poster', () => {
     expect(r.success).toBe(true)
   })
 })
+
+describe('parsePassInput — google.loyalty (storeCard)', () => {
+  const storeCard = (google: unknown) => ({ style: 'storeCard', ...validBase, google })
+
+  it('accepts points, secondaryPoints and accountName', () => {
+    const pass = parsePassInput(
+      storeCard({
+        loyalty: {
+          points: { label: 'Stamps', balance: '6 / 10' },
+          secondaryPoints: { label: 'Reward', balance: 1 },
+          accountName: null,
+        },
+      }),
+    )
+    expect(pass.style === 'storeCard' && pass.google?.loyalty?.points?.balance).toBe('6 / 10')
+  })
+
+  it.each([
+    ['an empty label', { points: { label: '', balance: '1' } }],
+    ['an empty string balance', { points: { label: 'Stamps', balance: '' } }],
+    ['a non-finite balance', { points: { label: 'Stamps', balance: Number.NaN } }],
+    ['an empty accountName', { accountName: '' }],
+  ])('rejects %s', (_, loyalty) => {
+    expect(() => parsePassInput(storeCard({ loyalty }))).toThrow(PassmintSchemaError)
+  })
+
+  it('ignores google on other styles (unknown keys are stripped, as before)', () => {
+    const pass = parsePassInput({
+      style: 'eventTicket',
+      ...validBase,
+      google: { loyalty: { points: { label: 'x', balance: 1 } } },
+    })
+    expect(pass).not.toHaveProperty('google')
+  })
+})
