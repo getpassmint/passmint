@@ -211,7 +211,8 @@ const pass = Pass.storeCard({
 
 - `balance` takes a string (`balance.string`), an int32 (`balance.int`) or any other finite number (`balance.double`).
 - `accountName` defaults to the pass `description`, which is what earlier versions always sent. Set it to `null` to leave it off for anonymous cards.
-- Both live on the object, so changing a balance never re-submits the class for review.
+- Fields you leave out (an absent `points`, or `accountName: null`) are left out of the object, so a Google PATCH won't clear a value already on the card. Use an update or replace to remove it.
+- These all live on the object, so changing a balance never re-submits the class for review.
 
 ## One schema, two wallets
 

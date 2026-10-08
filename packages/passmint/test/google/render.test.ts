@@ -626,11 +626,19 @@ describe('renderGooglePayload — loyalty balance and account name', () => {
     return (payload.loyaltyObjects as Record<string, unknown>[])[0] as Record<string, unknown>
   }
 
-  it('no google input renders exactly as 0.6.0 (accountName is the description, no points)', () => {
-    const obj = loyaltyObject({})
-    expect(obj.accountName).toBe('Sample pass')
-    expect(obj).not.toHaveProperty('loyaltyPoints')
-    expect(obj).not.toHaveProperty('secondaryLoyaltyPoints')
+  // Captured from the 0.6.0 release (c3e175b), not from this code: key order included.
+  const RENDERED_0_6_0 =
+    '{"loyaltyClasses":[{"id":"3388000000000000.gr-1-class","issuerName":"Example Corp","reviewStatus":"UNDER_REVIEW","programName":"Example Corp"}],"loyaltyObjects":[{"id":"3388000000000000.gr-1","classId":"3388000000000000.gr-1-class","state":"ACTIVE","accountId":"gr-1","accountName":"Sample pass"}]}'
+
+  it.each([
+    ['no google key', {}],
+    ['google: {}', { google: {} }],
+    ['google: { loyalty: {} }', { google: { loyalty: {} } }],
+  ])('renders byte-identically to 0.6.0 with %s', (_, extra) => {
+    const payload = renderGooglePayload({ ...base, style: 'storeCard', ...extra } as PassInput, {
+      issuerId,
+    })
+    expect(JSON.stringify(payload)).toBe(RENDERED_0_6_0)
   })
 
   it('renders a string balance as balance.string', () => {
@@ -674,6 +682,29 @@ describe('renderGooglePayload — loyalty balance and account name', () => {
     expect(loyaltyObject({ google: { loyalty: { accountName: null } } })).not.toHaveProperty(
       'accountName',
     )
+  })
+
+  it('renders points, secondaryPoints and an explicit accountName together', () => {
+    const obj = loyaltyObject({
+      google: {
+        loyalty: {
+          points: { label: 'Stamps', balance: '6 / 10' },
+          secondaryPoints: { label: 'Reward', balance: 'Latte' },
+          accountName: 'Ana García',
+        },
+      },
+    })
+    expect(obj.loyaltyPoints).toEqual({ label: 'Stamps', balance: { string: '6 / 10' } })
+    expect(obj.secondaryLoyaltyPoints).toEqual({ label: 'Reward', balance: { string: 'Latte' } })
+    expect(obj.accountName).toBe('Ana García')
+  })
+
+  it('lets applyRaw.google override loyaltyPoints', () => {
+    const obj = loyaltyObject({
+      google: { loyalty: { points: { label: 'Stamps', balance: '6 / 10' } } },
+      applyRaw: { google: { loyaltyPoints: { label: 'Raw', balance: { string: '9 / 10' } } } },
+    })
+    expect(obj.loyaltyPoints).toEqual({ label: 'Raw', balance: { string: '9 / 10' } })
   })
 
   it('leaves the class untouched (balance is object-level, so a balance change never re-submits the class)', () => {
