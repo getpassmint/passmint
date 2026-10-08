@@ -229,10 +229,37 @@ export const EventTicketSchema = v.object({
 })
 export type EventTicketInput = v.InferOutput<typeof EventTicketSchema>
 
+/**
+ * A Google Wallet loyalty balance (LoyaltyObject `loyaltyPoints`). A string renders as
+ * `balance.string`, so a stamp count like "6 / 10" needs no parsing; an int32 as
+ * `balance.int`; any other finite number as `balance.double`. Google-only; Apple ignores it.
+ */
+const GoogleLoyaltyPointsSchema = v.object({
+  label: v.pipe(v.string(), v.minLength(1)),
+  balance: v.union([v.pipe(v.string(), v.minLength(1)), v.pipe(v.number(), v.finite())]),
+})
+export type GoogleLoyaltyPoints = v.InferOutput<typeof GoogleLoyaltyPointsSchema>
+
+/**
+ * Google-only loyalty extras for a store card.
+ *
+ * `accountName` is the card holder's name ("Ana García"). Omitted (undefined) keeps the
+ * existing behaviour — the pass description — so current cards do not change; `null` leaves
+ * `accountName` off the object entirely (an anonymous card shows only its account id).
+ */
+const GoogleLoyaltySchema = v.object({
+  points: v.optional(GoogleLoyaltyPointsSchema),
+  secondaryPoints: v.optional(GoogleLoyaltyPointsSchema),
+  accountName: v.optional(v.nullable(v.pipe(v.string(), v.minLength(1)))),
+})
+export type GoogleLoyalty = v.InferOutput<typeof GoogleLoyaltySchema>
+
 export const StoreCardSchema = v.object({
   ...PassBaseSchema.entries,
   style: v.literal('storeCard'),
   ...StandardFieldLayout,
+  /** Google Wallet only. See {@link GoogleLoyalty}. */
+  google: v.optional(v.object({ loyalty: v.optional(GoogleLoyaltySchema) })),
 })
 export type StoreCardInput = v.InferOutput<typeof StoreCardSchema>
 

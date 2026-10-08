@@ -617,3 +617,75 @@ describe('renderGooglePayload — logo and hero field names per type', () => {
     }
   })
 })
+
+describe('renderGooglePayload — loyalty balance and account name', () => {
+  const loyaltyObject = (input: Record<string, unknown>) => {
+    const payload = renderGooglePayload({ ...base, style: 'storeCard', ...input } as PassInput, {
+      issuerId,
+    })
+    return (payload.loyaltyObjects as Record<string, unknown>[])[0] as Record<string, unknown>
+  }
+
+  it('no google input renders exactly as 0.6.0 (accountName is the description, no points)', () => {
+    const obj = loyaltyObject({})
+    expect(obj.accountName).toBe('Sample pass')
+    expect(obj).not.toHaveProperty('loyaltyPoints')
+    expect(obj).not.toHaveProperty('secondaryLoyaltyPoints')
+  })
+
+  it('renders a string balance as balance.string', () => {
+    const obj = loyaltyObject({
+      google: { loyalty: { points: { label: 'Stamps', balance: '6 / 10' } } },
+    })
+    expect(obj.loyaltyPoints).toEqual({ label: 'Stamps', balance: { string: '6 / 10' } })
+  })
+
+  it('renders an int32 as balance.int and anything else numeric as balance.double', () => {
+    expect(
+      loyaltyObject({ google: { loyalty: { points: { label: 'Points', balance: 120 } } } })
+        .loyaltyPoints,
+    ).toEqual({ label: 'Points', balance: { int: 120 } })
+    expect(
+      loyaltyObject({ google: { loyalty: { points: { label: 'Miles', balance: 2.5 } } } })
+        .loyaltyPoints,
+    ).toEqual({ label: 'Miles', balance: { double: 2.5 } })
+    expect(
+      loyaltyObject({
+        google: { loyalty: { points: { label: 'Big', balance: 3_000_000_000 } } },
+      }).loyaltyPoints,
+    ).toEqual({ label: 'Big', balance: { double: 3_000_000_000 } })
+  })
+
+  it('renders secondaryPoints as secondaryLoyaltyPoints', () => {
+    const obj = loyaltyObject({
+      google: { loyalty: { secondaryPoints: { label: 'Reward', balance: 'Free latte' } } },
+    })
+    expect(obj.secondaryLoyaltyPoints).toEqual({
+      label: 'Reward',
+      balance: { string: 'Free latte' },
+    })
+    expect(obj).not.toHaveProperty('loyaltyPoints')
+  })
+
+  it('uses an explicit accountName, and omits it for null', () => {
+    expect(loyaltyObject({ google: { loyalty: { accountName: 'Ana García' } } }).accountName).toBe(
+      'Ana García',
+    )
+    expect(loyaltyObject({ google: { loyalty: { accountName: null } } })).not.toHaveProperty(
+      'accountName',
+    )
+  })
+
+  it('leaves the class untouched (balance is object-level, so a balance change never re-submits the class)', () => {
+    const plain = renderGooglePayload({ ...base, style: 'storeCard' }, { issuerId })
+    const withPoints = renderGooglePayload(
+      {
+        ...base,
+        style: 'storeCard',
+        google: { loyalty: { points: { label: 'Stamps', balance: '6 / 10' } } },
+      } as PassInput,
+      { issuerId },
+    )
+    expect(withPoints.loyaltyClasses).toEqual(plain.loyaltyClasses)
+  })
+})

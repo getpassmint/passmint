@@ -66,6 +66,8 @@ export type {
   FieldValue,
   GenericPassInput,
   GoogleImageModule,
+  GoogleLoyalty,
+  GoogleLoyaltyPoints,
   GoogleObjectImages,
   ImageSource,
   Images,
