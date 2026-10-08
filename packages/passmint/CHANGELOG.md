@@ -1,5 +1,11 @@
 # passmint
 
+## 0.7.0
+
+### Minor Changes
+
+- 18927dc: Add `google.loyalty` on store cards for Google Wallet loyalty objects: `points` and `secondaryPoints` (`{ label, balance }`, rendered as `loyaltyPoints` / `secondaryLoyaltyPoints`; a string balance becomes `balance.string`, an int32 `balance.int`, any other number `balance.double`) and `accountName` (the holder's name; `null` omits it). Without `google.loyalty` the output is unchanged: `accountName` is still the pass description. New exported types: `GoogleLoyalty`, `GoogleLoyaltyPoints`.
+
 ## 0.6.0
 
 ### Minor Changes
