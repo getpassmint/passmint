@@ -27,7 +27,7 @@ By the end you'll have:
 
 You need:
 
-- **Node 20+** (or any edge runtime with Web Crypto — Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase/Netlify Edge all work).
+- **Node 20.19+** (or any edge runtime with Web Crypto — Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase/Netlify Edge all work).
 - **`openssl`** on your `PATH` for one-time certificate and key conversion.
 - An **Apple Developer account** ($99/year) if you want to ship `.pkpass` files.
 - A **Google Cloud project** and a **Google Pay & Wallet Console** issuer account if you want Google Wallet.

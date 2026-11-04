@@ -35,7 +35,7 @@ await pass.toGoogleSaveLink(google, { origins: [...] }) // pay.google.com URL
 
 ## Why passmint
 
-- **Edge-native.** Runs on Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase Edge, Netlify Edge, and Node 20+ without polyfills.
+- **Edge-native.** Runs on Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase Edge, Netlify Edge, and Node 20.19+ without polyfills.
 - **Web Crypto only.** No `node-forge`, no `node:crypto`, no `Buffer`. Just `Uint8Array`, `crypto.subtle`, `TextEncoder`.
 - **One schema, two wallets.** A single `Pass` builds both an Apple `.pkpass` and a Google save-link JWT.
 - **~21 KB gzipped.** Strict TypeScript, Valibot discriminated unions per pass style, typed error hierarchy.
