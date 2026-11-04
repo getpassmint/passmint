@@ -51,6 +51,10 @@ jobs:
       # via @cloudflare/vitest-plugin.
       - run: pnpm --filter passmint test:workers
 
+  # Runtime matrix: the library still supports Node 20, but the
+  # build toolchain (tsdown) needs Node >=22.18, so the build is covered
+  # by `check` on Node 22. The suite imports from src/, so it runs here
+  # directly through vitest (bypassing turbo's test -> build dependency).
   matrix:
     runs-on: ubuntu-latest
     strategy:
@@ -65,8 +69,7 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: pnpm test
+      - run: pnpm --filter passmint test
 
   package-validation:
     runs-on: ubuntu-latest
