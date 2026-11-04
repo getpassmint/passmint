@@ -27,7 +27,7 @@ updates:
           - 'turbo'
           - 'tsdown'
           - 'vitest'
-          - '@cloudflare/vitest-pool-workers'
+          - '@cloudflare/vitest-plugin'
           - '@changesets/*'
 
   - package-ecosystem: github-actions

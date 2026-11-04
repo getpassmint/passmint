@@ -5,7 +5,7 @@ import { GoogleSigningMaterial } from '../../src/google/material'
 import { Pass } from '../../src/pass'
 
 /**
- * Runs inside workerd via @cloudflare/vitest-pool-workers.
+ * Runs inside workerd via @cloudflare/vitest-plugin.
  *
  * The job of this file is to prove that `passmint`'s production code
  * actually loads and executes inside a real Cloudflare Workers runtime.

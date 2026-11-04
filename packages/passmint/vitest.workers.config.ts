@@ -1,9 +1,9 @@
-import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { cloudflareTest } from '@cloudflare/vitest-plugin'
 import { defineConfig } from 'vitest/config'
 
 /**
  * Runs a smoke-test subset inside a real Cloudflare workerd runtime
- * via `@cloudflare/vitest-pool-workers`. Purpose: catch any accidental
+ * via `@cloudflare/vitest-plugin`. Purpose: catch any accidental
  * Node API usage in the library (or a transitive dep) that Biome's
  * `noRestrictedImports` + the bundle-guard grep might miss.
  *

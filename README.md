@@ -73,7 +73,7 @@ pnpm type-check     # tsc --noEmit
 ```sh
 cd packages/passmint
 
-pnpm test:workers   # smoke tests inside real workerd via vitest-pool-workers
+pnpm test:workers   # smoke tests inside real workerd via @cloudflare/vitest-plugin
 pnpm bundle-guard   # fails if dist/ contains any `node:*` import
 pnpm publint        # catches common publish mistakes
 pnpm attw            # @arethetypeswrong/cli, esm-only profile
