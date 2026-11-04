@@ -48,7 +48,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Runs the smoke tests inside a real Cloudflare workerd runtime
-      # via @cloudflare/vitest-pool-workers.
+      # via @cloudflare/vitest-plugin.
       - run: pnpm --filter passmint test:workers
 
   matrix:

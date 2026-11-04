@@ -400,7 +400,7 @@ Pass.eventTicket({
 ## FAQ
 
 **Does this work on Cloudflare Workers?**  
-Yes. CI runs the full signing pipeline inside real `workerd` via `@cloudflare/vitest-pool-workers`.
+Yes. CI runs the full signing pipeline inside real `workerd` via `@cloudflare/vitest-plugin`.
 
 **Do I need the Apple WWDR certificate?**  
 Yes — `.pkpass` signatures are verified against Apple's intermediate CA. You need the WWDR intermediate that *issued your Pass Type ID certificate*, not just the newest one. Check with `openssl x509 -in signerCert.pem -noout -issuer` and look at the `OU` (most current certificates show `OU=G4`), then download the matching `AppleWWDRCA<OU>.cer` from [apple.com/certificateauthority](https://www.apple.com/certificateauthority/). `SigningMaterial.fromPem` throws `E_WWDR_MISMATCH` if the WWDR you pass didn't issue your certificate.

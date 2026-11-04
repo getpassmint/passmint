@@ -1,5 +1,5 @@
-# Minimal Workers config for the vitest-pool-workers runtime matrix
-# test. `nodejs_compat` is required by vitest-pool-workers itself (not
+# Minimal Workers config for the @cloudflare/vitest-plugin runtime matrix
+# test. `nodejs_compat` is required by @cloudflare/vitest-plugin itself (not
 # by the library) — it's used by the pool's test runner infrastructure
 # to load test modules. The library under test never imports from
 # `node:*`; that's enforced separately by Biome's noRestrictedImports
