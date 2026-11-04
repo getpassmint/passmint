@@ -58,7 +58,7 @@ examples/node/       Node examples for Apple + Google
 
 ## Development
 
-Prerequisites: Node 20+, pnpm 9+, and `openssl` on `PATH` (tests shell out to it for round-trip verification).
+Prerequisites: Node 22.18+ (the build toolchain needs it; the library itself still runs on Node 20), pnpm 9+, and `openssl` on `PATH` (tests shell out to it for round-trip verification).
 
 ```sh
 pnpm install
