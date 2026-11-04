@@ -43,7 +43,7 @@ await pass.toGoogleSaveLink(google, { origins: [...] }) // pay.google.com URL
 
 ## Features
 
-- **Edge-native.** Runs on Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase Edge, Netlify Edge, and Node 20+ without polyfills.
+- **Edge-native.** Runs on Cloudflare Workers, Vercel Edge, Deno, Bun, Supabase Edge, Netlify Edge, and Node 20.19+ without polyfills.
 - **Web Crypto only.** No `node-forge`, no `node:crypto`, no `Buffer`. Just `Uint8Array`, `crypto.subtle`, `TextEncoder`.
 - **One schema, two wallets.** A single `Pass` builds both an Apple `.pkpass` and a Google save-link JWT.
 - **~21 KB gzipped.** Strict TypeScript, Valibot discriminated unions per pass style, typed error hierarchy.
@@ -58,7 +58,7 @@ yarn add     passmint
 bun  add     passmint
 ```
 
-Requires Node 20+ or any edge runtime with Web Crypto.
+Requires Node `^20.19.0 || >=22.12.0` or any edge runtime with Web Crypto.
 
 ## Quickstart
 
@@ -320,7 +320,7 @@ issuers can reach them via `applyRaw.apple`.
 
 | Runtime                  | Status                              |
 | ------------------------ | ----------------------------------- |
-| Node.js 20+              | ✅                                   |
+| Node.js 20.19+           | ✅                                   |
 | Cloudflare Workers       | ✅ (CI runs inside real `workerd`)  |
 | Vercel Edge Functions    | ✅                                   |
 | Deno 1.40+ / Deno 2      | ✅                                   |

@@ -14,10 +14,12 @@ updates:
       - dependencies
     groups:
       # @peculiar/asn1-* are versioned together in practice; group their
-      # bumps into a single PR to keep CI runs manageable.
+      # bumps into a single PR to keep CI runs manageable. asn1js is their
+      # peer dependency (v3+), so it moves with them.
       peculiar-asn1:
         patterns:
           - '@peculiar/asn1-*'
+          - 'asn1js'
       # TypeScript tooling and dev deps in one PR.
       dev-tooling:
         dependency-type: development
