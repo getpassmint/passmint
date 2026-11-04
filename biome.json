@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.5/schema.json",
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "vcs": {
     "enabled": true,
@@ -64,6 +64,12 @@
       "semicolons": "asNeeded",
       "arrowParentheses": "always"
     }
+  },
+  "yaml": {
+    "formatter": { "enabled": false }
+  },
+  "markdown": {
+    "formatter": { "enabled": false }
   },
   "overrides": [
     {

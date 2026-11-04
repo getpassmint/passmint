@@ -66,10 +66,11 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "catalog:",
     "@cloudflare/vitest-plugin": "catalog:",
-    "@size-limit/preset-small-lib": "^13.0.3",
+    "@size-limit/esbuild": "^14.3.0",
+    "@size-limit/file": "^14.3.0",
     "@types/node": "catalog:",
     "publint": "catalog:",
-    "size-limit": "^13.0.3",
+    "size-limit": "^14.3.0",
     "tsdown": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
