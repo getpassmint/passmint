@@ -16,4 +16,4 @@ catalog:
   '@types/node': ^26.6.6
   '@cloudflare/vitest-plugin': ^1.5.1
   '@arethetypeswrong/cli': ^0.18.5
-  publint: ^0.3.24
+  publint: ^0.3.25
