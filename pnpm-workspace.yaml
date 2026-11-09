@@ -14,6 +14,6 @@ catalog:
   '@peculiar/asn1-rsa': ^3.0.0
   asn1js: ^4.0.0
   '@types/node': ^26.6.6
-  '@cloudflare/vitest-plugin': ^1.5.1
+  '@cloudflare/vitest-plugin': ^1.6.0
   '@arethetypeswrong/cli': ^0.18.5
   publint: ^0.3.25
